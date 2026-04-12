@@ -1,58 +1,47 @@
 # penman
 
-Convert markdown to rich text styled for any platform and drop it on the clipboard ready to paste.
+You write markdown. You paste it somewhere. It looks like garbage.
 
-Penman takes markdown, applies platform-specific design tokens (fonts, colors, code styling), renders it to HTML with inline styles, and copies it to your macOS clipboard as rich text. Paste into Slack, Teams, Discord, Word, Google Docs, Notion, Outlook, Gmail, Confluence, Jira, or PowerPoint — it just works.
+Penman fixes that. Give it markdown and a target (Slack, Word, Gmail, whatever), and it puts styled rich text on your clipboard. Cmd+V. Done. Code blocks have syntax highlighting. Tables have borders. Headings look like headings. Fonts match what the app actually uses.
 
 ## Install
 
-Penman is a Claude Code plugin. Add it to your `claude` alias:
+It's a Claude Code plugin. Add it to your `claude` alias:
 
 ```bash
 claude --plugin-dir /path/to/penman
 ```
 
-Or install from a marketplace:
-
-```bash
-claude plugin marketplace add <source>
-claude plugin install penman@<marketplace>
-```
-
-Then run `/penman:install` to set up dependencies.
+Then run `/penman:install` to pull dependencies (needs [Bun](https://bun.sh)).
 
 ## Usage
-
-### Slash command
 
 ```
 /penman:pen --slack
 /penman:pen --teams ./notes.md
 /penman:pen --word --dark
-/penman:pen --notion
 ```
 
-Pass a `--<platform>` flag and optionally a file path or inline text. If anything is missing, it asks.
+Pass a platform flag. Optionally pass a file or inline text. If you leave something out, it asks.
 
-### MCP tools
-
-The plugin exposes three MCP tools that Claude can call directly:
-
-- **`penman`** — convert + copy to clipboard
-- **`penman_html`** — convert + return HTML (no clipboard side-effect)
-- **`penman_platforms`** — list available platforms grouped by category
-
-### CLI
+There's also a CLI if you want it:
 
 ```bash
 penman --for slack < notes.md
 penman --for word --theme dark notes.md
-penman --for gmail --tokens  # print resolved design tokens
 ```
+
+### MCP tools
+
+Three tools Claude can call directly:
+
+- `penman` — convert and copy to clipboard
+- `penman_html` — convert and return the HTML (doesn't touch clipboard)
+- `penman_platforms` — list what's available
 
 ## Platforms
 
-| Category | Platforms |
+| | |
 |---|---|
 | Chat | slack, teams, discord |
 | Document | word, google-docs, notion |
@@ -60,30 +49,31 @@ penman --for gmail --tokens  # print resolved design tokens
 | Wiki | confluence, jira |
 | Presentation | powerpoint, google-slides |
 
-Each platform has its own font stack, font sizes, colors, and code styling — matched to what the target app uses natively.
+Each one has its own font stack, sizes, and colors matched to what the app uses natively. Slack gets Lato at 15px. Word gets Calibri at 11pt. Gmail gets Arial at 14px. And so on.
 
 ## How it works
 
-1. **Resolve tokens** — merge base theme (light/dark) + platform overrides + user config (`~/.penman.json5`)
-2. **Render** — parse markdown with [marked](https://github.com/markedjs/marked), syntax-highlight code with [highlight.js](https://github.com/highlightjs/highlight.js), apply all styles as inline `style=""` attributes (no `<style>` blocks — they get stripped by every paste target)
-3. **Copy** — hex-encode the HTML and set the clipboard via `osascript` with both `«class HTML»` and plain-text flavors
+Three steps:
 
-### Platform-aware rendering
+1. **Tokens** — pick the right fonts, colors, and code styling for the platform and theme (light/dark). User overrides from `~/.penman.json5` get merged in.
+2. **Render** — [marked](https://github.com/markedjs/marked) parses the markdown, [highlight.js](https://github.com/highlightjs/highlight.js) handles syntax highlighting, and everything gets inline `style` attributes. No `<style>` blocks. Every paste target strips those.
+3. **Clipboard** — hex-encode the HTML, set it via `osascript` as `«class HTML»` with a plain-text fallback.
 
-- **Chat platforms** (Slack, Teams, Discord): flat HTML with `<strong>` headings, `<br>` spacing, text-aligned tables in `<pre>` blocks. These platforms aggressively strip HTML structure on paste.
-- **Document/email/wiki platforms**: semantic HTML (`<h1>`, `<p>`, `<table>`) with explicit inline styles on every element. Absolute `pt`/`px` font sizes — no `em` units.
+### Chat vs. document rendering
 
-### Design tokens
+Slack, Teams, and Discord strip most HTML structure on paste. `<h1>` becomes nothing. `<p>` collapses. `<table>` dumps cell contents inline. So penman renders chat platforms differently: `<strong>` for headings, `<br>` for spacing, text-aligned tables inside `<pre>` blocks.
 
-Override tokens globally or per-platform in `~/.penman.json5`:
+Document and email platforms (Word, Notion, Outlook, Gmail) get real semantic HTML with explicit inline styles on every element. Absolute `pt`/`px` font sizes, not `em`.
+
+### Custom tokens
+
+Override anything globally or per-platform in `~/.penman.json5`:
 
 ```json5
 {
-  // Global overrides
   "tokens": {
     "codeFontFamily": "Fira Code, monospace"
   },
-  // Per-platform overrides
   "platforms": {
     "slack": {
       "tokens": { "fontFamily": "Inter, sans-serif" }
@@ -92,12 +82,12 @@ Override tokens globally or per-platform in `~/.penman.json5`:
 }
 ```
 
-Run `penman --for <platform> --tokens` to see all available tokens for a platform.
+Run `penman --for <platform> --tokens` to see what's available.
 
 ## Requirements
 
-- macOS (uses `osascript` for clipboard, `textutil` for plain-text fallback)
-- [Bun](https://bun.sh) runtime
+- macOS (clipboard uses `osascript` and `textutil`)
+- [Bun](https://bun.sh)
 
 ## License
 
