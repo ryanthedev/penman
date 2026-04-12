@@ -1,0 +1,22 @@
+{
+  "name": "penman",
+  "version": "1.0.0",
+  "description": "Convert markdown to rich text for any platform — CLI and MCP server",
+  "main": "bin/penman.js",
+  "bin": {
+    "penman": "./bin/penman.js",
+    "penman-mcp": "./src/mcp.js"
+  },
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "highlight.js": "^11.11.1",
+    "json5": "^2.2.3",
+    "marked": "^18.0.0",
+    "zod": "^4.3.6"
+  }
+}
