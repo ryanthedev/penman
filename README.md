@@ -6,13 +6,16 @@ Penman fixes that. Give it markdown and a target (Slack, Word, Gmail, whatever),
 
 ## Install
 
-It's a Claude Code plugin. Add it to your `claude` alias:
+From the [RTD marketplace](https://github.com/ryanthedev/rtd-claude-inn):
 
 ```bash
-claude --plugin-dir /path/to/penman
+/plugin marketplace add ryanthedev/rtd-claude-inn
+/plugin install penman@rtd
 ```
 
-Then run `/penman:install` to pull dependencies (needs [Bun](https://bun.sh)).
+Then run `/penman:install` to pull dependencies and seed `~/.penman.json5` (needs [Bun](https://bun.sh)).
+
+After updates, re-run `/penman:install` — the cached plugin path changes with each version.
 
 ## Usage
 
