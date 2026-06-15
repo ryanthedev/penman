@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>penman — markdown to rich text for any platform</title>
+<meta name="description" content="You write markdown. You paste it somewhere. It looks like garbage. Penman fixes that — platform-styled rich text on your clipboard, fonts matched to the app, code highlighted, tables that survive.">
+<meta property="og:title" content="penman — markdown to rich text for any platform">
+<meta property="og:description" content="Markdown in, platform-styled rich text on the clipboard. 12 platforms, 1 command, 0 style blocks.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#faf8f8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' fill='%23fdfcfc' stroke='%23312d2c' stroke-width='2'/%3E%3Cline x1='9' y1='21' x2='23' y2='11' stroke='%23ff051f' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,900;1,9..144,600&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Red Pencil — see DESIGN.md. DESIGN.md is law.
+   Neo-Brutalist + Editorial type voice. Light scheme only (v1).
+   ============================================================ */
+
+:root {
+  --neutral-1: #fdfcfc;
+  --neutral-2: #faf8f8;
+  --neutral-3: #f3efef;
+  --neutral-4: #ece6e6;
+  --neutral-5: #e3dcdb;
+  --neutral-6: #d9d0cf;
+  --neutral-7: #cbc1bf;
+  --neutral-8: #b4a7a6;
+  --neutral-9: #948583;
+  --neutral-10: #817472;
+  --neutral-11: #696160;
+  --neutral-12: #312d2c;
+  --accent-3: #ffebe9;
+  --accent-9: #ff051f;
+  --accent-10: #e00018;
+  --accent-11: #a9352f;
+  --accent-on-solid: #150a09;
+  --cyan-3: #d9f7fb;
+  --cyan-9: #00cfe2;
+  --cyan-11: #00717c;
+  --background: var(--neutral-1);
+  --surface: var(--neutral-2);
+  --surface-hover: var(--neutral-3);
+  --border: var(--neutral-7);
+  --text-secondary: var(--neutral-11);
+  --text: var(--neutral-12);
+
+  /* type */
+  --display: "Fraunces", Georgia, serif;
+  --body: "Archivo", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* spacing scale: 4 / 8 / 16 / 24 / 40 / 64 / 104 */
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 40px; --s6: 64px; --s7: 104px;
+
+  /* motion */
+  --snap: cubic-bezier(0.2, 0, 0, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font: 400 16px/1.5 var(--body);
+  color: var(--text);
+  background: var(--surface); /* the desk */
+}
+
+::selection { background: var(--accent-3); }
+
+/* --- a11y ---------------------------------------------------- */
+.skip {
+  position: absolute; left: -9999px; top: 0;
+  background: var(--neutral-1); border: 2px solid var(--text);
+  padding: var(--s2) var(--s3); font-family: var(--mono); z-index: 10;
+}
+.skip:focus { left: var(--s3); }
+
+:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+a:focus-visible { outline-color: var(--accent-9); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* --- layout --------------------------------------------------- */
+.wrap { max-width: 1080px; margin-inline: auto; padding-inline: var(--s4); }
+section { padding-block: var(--s6); }
+@media (min-width: 720px) { section { padding-block: var(--s7); } }
+
+/* --- type ------------------------------------------------------ */
+h1, h2, h3 { font-family: var(--display); font-weight: 900; line-height: 1.05; }
+h1 { font-size: clamp(38px, 7vw, 81px); letter-spacing: -0.01em; }
+h2 { font-size: clamp(36px, 5vw, 54px); margin-bottom: var(--s4); }
+.eyebrow {
+  font: 600 13px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--text-secondary); display: block; margin-bottom: var(--s3);
+}
+.lede { font-size: clamp(18px, 2.4vw, 24px); line-height: 1.4; max-width: 32em; }
+p { max-width: 65ch; }
+.sub { color: var(--text-secondary); }
+
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent-9); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { background: var(--accent-3); }
+
+code { font-family: var(--mono); font-size: 0.9em; background: var(--neutral-3); padding: 2px 6px; }
+
+/* the universal "wrong" mark */
+.squiggle { text-decoration: underline wavy var(--accent-9) 3px; text-underline-offset: 7px; }
+
+/* --- sheets (the system) -------------------------------------- */
+.sheet {
+  background: var(--background);
+  border: 2px solid var(--text);
+  box-shadow: 6px 6px 0 var(--text);
+}
+.sheet--hero { border-width: 3px; }
+.sheet--tilt { transform: rotate(-1.2deg); }
+.sheet--hover { transition: transform 150ms var(--snap), box-shadow 150ms var(--snap); }
+.sheet--hover:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--text); }
+
+/* --- buttons ---------------------------------------------------- */
+.btn {
+  display: inline-block; cursor: pointer;
+  font: 600 16px/1 var(--body); text-decoration: none;
+  border: 2px solid var(--text); padding: 14px 24px;
+  background: var(--accent-9); color: var(--accent-on-solid);
+  box-shadow: 6px 6px 0 var(--text);
+  transition: transform 150ms var(--snap), box-shadow 150ms var(--snap);
+}
+.btn:hover { background: var(--accent-10); transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--text); }
+.btn:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0 var(--text); }
+.btn--ghost { background: var(--background); color: var(--text); }
+.btn--ghost:hover { background: var(--background); }
+
+/* --- header ----------------------------------------------------- */
+header { padding-block: var(--s4); }
+header .wrap { display: flex; justify-content: space-between; align-items: baseline; }
+.wordmark { font: 900 28px/1 var(--display); text-decoration: none; }
+.wordmark:hover { background: none; }
+.wordmark .dot { color: var(--accent-9); }
+.headlink { font: 400 14px var(--mono); }
+
+/* --- hero -------------------------------------------------------- */
+.hero { padding-top: var(--s5); }
+.hero h1 span { display: block; }
+.hero .lede { margin-top: var(--s4); }
+.hero .fix { font: 900 clamp(24px, 3.4vw, 36px)/1.2 var(--display); margin-top: var(--s5); }
+.cta-row { display: flex; gap: var(--s4); flex-wrap: wrap; margin-top: var(--s5); }
+
+.desk {
+  display: grid; gap: var(--s5); margin-top: var(--s6);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 880px) { .desk { grid-template-columns: 1fr 1fr; gap: var(--s6); } }
+
+.sheet-label {
+  font: 600 13px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.14em;
+  margin-bottom: var(--s3); display: block;
+}
+.sheet-cap { font: 400 13px var(--mono); color: var(--text-secondary); margin-top: var(--s3); }
+
+.paper { position: relative; padding: var(--s4); }
+
+/* the BEFORE sheet — raw markdown, struck through in red */
+.raw {
+  font-family: Calibri, Carlito, "Segoe UI", sans-serif;
+  font-size: 15px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
+}
+.strike { position: relative; }
+.strike::after {
+  content: ""; position: absolute; left: -3px; right: -3px; top: 48%; height: 3px;
+  background: var(--accent-9); pointer-events: none;
+  transform: rotate(var(--rot, 0deg)); transform-origin: left center;
+}
+.strike--a::after { --rot: -1.6deg; }
+.strike--b::after { --rot: 1.1deg; }
+.strike--c::after { --rot: -0.8deg; }
+
+/* hero entrance choreography — see DESIGN.md "Motion".
+   With JS on, the strikes start un-drawn and wipe in once the desk is in view.
+   No JS → strikes are already drawn (scaleX defaults to 1), nothing lost. */
+.js .desk:not(.played) .strike::after { transform: rotate(var(--rot, 0deg)) scaleX(0); }
+.desk.played .strike::after { animation: strike 180ms var(--snap) both; }
+.desk.played .strike--a::after { animation-delay: 120ms; }
+.desk.played .strike--b::after { animation-delay: 200ms; }
+.desk.played .strike--c::after { animation-delay: 280ms; }
+@keyframes strike {
+  from { transform: rotate(var(--rot, 0deg)) scaleX(0); }
+  to   { transform: rotate(var(--rot, 0deg)) scaleX(1); }
+}
+.margin-note {
+  position: absolute; top: -20px; right: 6px;
+  font: 600 italic 26px/1 var(--display); color: var(--accent-9);
+  transform: rotate(-4deg);
+}
+
+/* the AFTER sheet — real penman output, unedited */
+.paste-word {
+  font-family: Calibri, Carlito, "Segoe UI", sans-serif;
+  font-size: 11pt; line-height: 1.6; color: #333333; background: #ffffff;
+}
+/* the frame, not the print: paste-target defaults + containment.
+   The embedded markup itself stays exactly as penman emitted it. */
+.paste-word th { text-align: left; }
+.paste-word pre { overflow-x: auto; }
+
+/* the press stamp — the page's ONLY cyan */
+.stamp {
+  position: absolute; top: -16px; right: -10px;
+  border: 3px solid var(--cyan-9); color: var(--cyan-11); background: var(--background);
+  font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em;
+  padding: 8px 12px; transform: rotate(-8deg);
+  opacity: 0;
+}
+/* the stamp lands last — after the three strikes have wiped in (~280ms + 180ms) */
+.desk.played .stamp { animation: stamp 200ms var(--snap) 520ms forwards; }
+@keyframes stamp {
+  from { transform: rotate(-8deg) scale(1.6); opacity: 0; }
+  to   { transform: rotate(-8deg) scale(1);   opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp { opacity: 1; }
+  /* no sequence: strikes render fully drawn, stamp already visible */
+  .js .desk .strike::after { transform: rotate(var(--rot, 0deg)) scaleX(1) !important; animation: none !important; }
+}
+
+/* --- numbers strip ----------------------------------------------- */
+.numbers { border-block: 2px solid var(--text); background: var(--background); }
+.numbers .wrap { display: grid; gap: var(--s5); grid-template-columns: 1fr; }
+@media (min-width: 720px) {
+  .numbers .wrap { grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+  .numbers .num + .num { border-left: 2px solid var(--text); padding-left: var(--s5); }
+  .numbers .num { padding-right: var(--s5); }
+}
+.numbers .n { font: 900 clamp(81px, 10vw, 122px)/1 var(--display); display: block; }
+.numbers .num p { font: 400 15px/1.5 var(--body); color: var(--text-secondary); margin-top: var(--s2); }
+.numbers .num code { background: var(--neutral-3); }
+
+/* --- how it works ------------------------------------------------- */
+.steps { display: grid; gap: var(--s5); grid-template-columns: 1fr; margin-top: var(--s5); }
+@media (min-width: 880px) { .steps { grid-template-columns: 1fr 1fr 1fr; } }
+.step { padding: var(--s4); }
+.step .stepnum { font: 900 54px/1 var(--display); display: block; }
+.step h3 { font: 600 14px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.14em; margin: var(--s3) 0; }
+.step p { font-size: 15px; color: var(--text-secondary); }
+.step:nth-child(1) { transform: rotate(-0.6deg); }
+.step:nth-child(3) { transform: rotate(0.5deg); }
+
+/* --- recipes table -------------------------------------------------- */
+.table-sheet { padding: 0; overflow: hidden; margin-top: var(--s5); }
+.table-scroll { overflow-x: auto; }
+table.recipes { width: 100%; border-collapse: collapse; min-width: 720px; }
+.recipes caption { position: absolute; left: -9999px; }
+.recipes th {
+  font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em;
+  text-align: left; padding: var(--s3); background: var(--neutral-3);
+  border-bottom: 2px solid var(--text);
+}
+.recipes td { padding: 12px var(--s3); border-bottom: 1px solid var(--border); font: 400 14px/1.4 var(--mono); }
+.recipes tr:last-child td { border-bottom: none; }
+.recipes tbody tr:hover { background: var(--surface-hover); }
+.recipes .pname { font: 600 15px var(--body); }
+.recipes .kind { color: var(--text-secondary); font-size: 13px; }
+.footnote { font: 600 italic 16px var(--display); color: var(--accent-9); margin-top: var(--s3); }
+.fn-mark { color: var(--accent-9); font-weight: 600; }
+
+/* --- hard part -------------------------------------------------------- */
+.versus { display: grid; gap: var(--s5); grid-template-columns: 1fr; margin-top: var(--s5); }
+@media (min-width: 880px) { .versus { grid-template-columns: 1fr 1fr; } }
+.versus .paper { padding: var(--s4); }
+.versus h3 { font: 600 14px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: var(--s3); }
+.versus p.how { font-size: 15px; color: var(--text-secondary); margin-bottom: var(--s3); }
+.slack-pre {
+  background: #f5f5f5; padding: 8px 12px;
+  font-family: Monaco, Menlo, Consolas, monospace; font-size: 12px;
+  white-space: pre; overflow-x: auto; color: #24292e;
+}
+.word-table { border-collapse: collapse; border: 1px solid #e0e0e0; width: 100%;
+  font-family: Calibri, Carlito, sans-serif; font-size: 11pt; color: #333; background: #fff; }
+.word-table th { padding: 6px 12px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5; text-align: left; }
+.word-table td { padding: 6px 12px; border: 1px solid #e0e0e0; }
+
+/* --- claude code section ------------------------------------------------ */
+.cmdsheet { padding: var(--s4); margin-top: var(--s5); position: relative; }
+.cmdsheet pre { font: 400 15px/1.8 var(--mono); overflow-x: auto; }
+.copybtn {
+  position: absolute; top: var(--s3); right: var(--s3); cursor: pointer;
+  font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em;
+  background: var(--background); color: var(--text);
+  border: 2px solid var(--text); padding: 8px 12px; min-height: 44px; min-width: 44px;
+  box-shadow: 4px 4px 0 var(--text);
+  transition: transform 100ms var(--snap), box-shadow 100ms var(--snap);
+}
+.copybtn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--text); }
+.copybtn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--text); }
+.copybtn.copied { color: var(--cyan-11); border-color: var(--cyan-9); box-shadow: 4px 4px 0 var(--cyan-9); }
+
+/* natural-language transcript */
+.transcript { display: grid; grid-template-columns: 64px 1fr; gap: var(--s2) var(--s4); align-items: baseline; }
+.transcript .t-label { font: 600 12px/1.6 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); }
+.transcript .t-you { font: 600 italic clamp(20px, 2.6vw, 28px)/1.3 var(--display); max-width: none; }
+.transcript .t-claude { font: 400 16px/1.5 var(--body); max-width: none; }
+.transcript .ok { color: var(--cyan-11); font-weight: 600; }
+.alt-asks { font: 400 14px/1.8 var(--mono); color: var(--text-secondary); margin-top: var(--s3); max-width: none; }
+.alt-asks em { font-style: normal; color: var(--text); background: var(--neutral-3); padding: 2px 6px; }
+
+.tools { list-style: none; margin-top: var(--s5); border-top: 2px solid var(--text); }
+.tools li { display: grid; gap: var(--s1) var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--border); grid-template-columns: 1fr; }
+@media (min-width: 720px) { .tools li { grid-template-columns: 240px 1fr; } }
+.tools .tname { font: 600 15px var(--mono); }
+.tools .tdesc { color: var(--text-secondary); font-size: 15px; }
+
+/* --- colophon -------------------------------------------------------------- */
+footer { border-top: 2px solid var(--text); background: var(--background); padding-block: var(--s6); }
+footer p { font: 400 14px/1.8 var(--mono); color: var(--text-secondary); max-width: none; }
+footer .setline { font: 600 italic 20px var(--display); color: var(--text); margin-bottom: var(--s3); }
+</style>
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header>
+  <div class="wrap">
+    <a class="wordmark" href="#">penman<span class="dot">.</span></a>
+    <a class="headlink" href="https://github.com/ryanthedev/rtd-claude-inn">rtd marketplace ↗</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ hero ============ -->
+  <section class="hero">
+    <div class="wrap">
+      <h1>
+        <span>Claude writes markdown.</span>
+        <span>You paste it into Teams.</span>
+        <span>It looks like <em class="squiggle">garbage</em>.</span>
+      </h1>
+      <p class="fix">Penman bridges the gap.</p>
+      <p class="lede">The classic Claude-to-<code>&lt;xyz&gt;</code> converter. Say where the text is going and get platform-styled rich text on the clipboard — fonts matched to the app, code highlighted, tables that survive. <strong>&#8984;V. Done.</strong></p>
+      <div class="cta-row">
+        <a class="btn" href="#install">Install for Claude Code</a>
+        <a class="btn btn--ghost" href="#recipes">See the recipes</a>
+      </div>
+
+      <!-- the signature move: two sheets on the desk -->
+      <div class="desk">
+        <div>
+          <span class="sheet-label">Before · raw paste</span>
+          <div class="sheet sheet--hero sheet--tilt paper">
+            <span class="margin-note" aria-hidden="true">garbage.</span>
+            <div class="raw"># Q3 launch notes
+
+Ship date is <span class="strike strike--a">**Oct 14**</span>. The `--dark` flag is live.
+
+| metric  | target |
+<span class="strike strike--b">| ------- | ------ |</span>
+| signups | 4,000  |
+| churn   | &lt; 2%   |
+
+<span class="strike strike--c">```js</span>
+const html = penman(notes, { for: "word" });
+```</div>
+          </div>
+          <p class="sheet-cap">claude's markdown, pasted as-is. the recipient scrolls past it.</p>
+        </div>
+        <div>
+          <span class="sheet-label">After · penman</span>
+          <div class="sheet sheet--hero sheet--hover paper">
+            <span class="stamp" aria-hidden="true">Set by penman</span>
+            <!-- actual output of `penman --for word`, unedited -->
+            <div class="paste-word"><h1 style="font-size: 20pt; font-weight: bold; margin: 16px 0 8px 0; line-height: 1.25;">Q3 launch notes</h1><p style="margin: 0 0 12px 0;">Ship date is <strong>Oct 14</strong>. The <code style="background: #f0f0f0; border: 1px solid transparent; border-radius: 3px; padding: 2px 5px; font-family: Consolas, Courier New, monospace; font-size: 10pt; color: #c7254e;">--dark</code> flag is live.</p><table style="width: 100%; border-collapse: collapse; border: 1px solid #e0e0e0; margin: 0 0 12px 0;"><thead><tr><th style="padding: 6px 12px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">metric</th><th style="padding: 6px 12px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">target</th></tr></thead><tbody><tr><td style="padding: 6px 12px; border: 1px solid #e0e0e0;">signups</td><td style="padding: 6px 12px; border: 1px solid #e0e0e0;">4,000</td></tr><tr><td style="padding: 6px 12px; border: 1px solid #e0e0e0;">churn</td><td style="padding: 6px 12px; border: 1px solid #e0e0e0;">&lt; 2%</td></tr></tbody></table><table style="width: 100%; border-collapse: collapse; border: none; margin: 0 0 12px 0;"><tr><td style="background: #f5f5f5; padding: 12px; font-family: Consolas, Courier New, monospace; font-size: 10pt;"><pre style="margin: 0; white-space: pre; color: #24292e;"><code><span style="color: #24292e;"><span style="color: #d73a49; font-weight: bold;">const</span> html = <span style="color: #6f42c1;">penman</span>(notes, { <span style="color: #005cc5;">for</span>: <span style="color: #032f62;">&quot;word&quot;</span> });</span></code></pre></td></tr></table></div>
+          </div>
+          <p class="sheet-cap">actual output of <code>penman --for word</code>, unedited.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ numbers ============ -->
+  <section class="numbers">
+    <div class="wrap">
+      <div class="num">
+        <span class="n">12</span>
+        <p>platforms, each with the fonts, sizes, and colors the app uses natively.</p>
+      </div>
+      <div class="num">
+        <span class="n">1</span>
+        <p>sentence between Claude's answer and paste-ready rich text.</p>
+      </div>
+      <div class="num">
+        <span class="n">0</span>
+        <p><code>&lt;style&gt;</code> blocks in the output. Every paste target strips them — so every style is inline.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ recipes ============ -->
+  <section id="recipes">
+    <div class="wrap">
+      <span class="eyebrow">The platforms</span>
+      <h2>It knows what Slack renders.</h2>
+      <p class="sub">Twelve targets — chat, documents, email, wikis, decks. Real values from <code>src/tokens.js</code>, not approximations: this is what each platform actually gets.</p>
+      <div class="sheet table-sheet">
+        <div class="table-scroll">
+          <table class="recipes">
+            <caption>Per-platform typography recipes</caption>
+            <thead>
+              <tr><th scope="col">Platform</th><th scope="col">Kind</th><th scope="col">Body</th><th scope="col">Size</th><th scope="col">Leading</th><th scope="col">Code</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="pname">slack</td><td class="kind">chat</td><td>Lato</td><td>15px</td><td>1.46668<span class="fn-mark">*</span></td><td>Monaco · 12px</td></tr>
+              <tr><td class="pname">teams</td><td class="kind">chat</td><td>Segoe UI</td><td>14px</td><td>1.5</td><td>Consolas · 12px</td></tr>
+              <tr><td class="pname">discord</td><td class="kind">chat</td><td>gg sans</td><td>16px</td><td>1.375</td><td>Consolas · 12px</td></tr>
+              <tr><td class="pname">word</td><td class="kind">document</td><td>Calibri</td><td>11pt</td><td>1.6</td><td>Consolas · 10pt</td></tr>
+              <tr><td class="pname">google-docs</td><td class="kind">document</td><td>Arial</td><td>11pt</td><td>1.5</td><td>Consolas · 10pt</td></tr>
+              <tr><td class="pname">notion</td><td class="kind">document</td><td>system-ui</td><td>16px</td><td>1.5</td><td>SFMono-Regular · 14px</td></tr>
+              <tr><td class="pname">outlook</td><td class="kind">email</td><td>Calibri</td><td>11pt</td><td>1.5</td><td>Consolas · 10pt</td></tr>
+              <tr><td class="pname">gmail</td><td class="kind">email</td><td>Arial</td><td>14px</td><td>1.5</td><td>monospace · 13px</td></tr>
+              <tr><td class="pname">confluence</td><td class="kind">wiki</td><td>-apple-system…</td><td>14px</td><td>1.714</td><td>SFMono-Medium · 12px</td></tr>
+              <tr><td class="pname">jira</td><td class="kind">wiki</td><td>-apple-system…</td><td>14px</td><td>1.714</td><td>SFMono-Medium · 12px</td></tr>
+              <tr><td class="pname">powerpoint</td><td class="kind">deck</td><td>Calibri</td><td>18pt</td><td>1.4</td><td>Consolas · 14pt</td></tr>
+              <tr><td class="pname">google-slides</td><td class="kind">deck</td><td>Arial</td><td>18pt</td><td>1.4</td><td>Courier New · 14pt</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="footnote">* 1.46668 — yes, really. That's Slack's actual line height.</p>
+    </div>
+  </section>
+
+  <!-- ============ the hard part ============ -->
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">The hard part</span>
+      <h2>Slack eats your &lt;h1&gt;.</h2>
+      <p class="sub">Teams collapses your <code>&lt;p&gt;</code>. Discord dumps your table's cells into one line. Chat apps strip structure on paste — so penman doesn't send them structure.</p>
+      <div class="versus">
+        <div>
+          <div class="sheet paper">
+            <h3>Chat targets</h3>
+            <p class="how"><code>&lt;strong&gt;</code> for headings, <code>&lt;br&gt;</code> for spacing — and tables re-set as aligned text inside <code>&lt;pre&gt;</code>, because that's the only table Slack can't ruin:</p>
+            <!-- table excerpt from real `penman --for slack` output -->
+            <div class="slack-pre">metric  | target
+--------+-------
+signups | 4,000
+churn   | &lt; 2%  </div>
+          </div>
+          <p class="sheet-cap">the same table, set for slack.</p>
+        </div>
+        <div>
+          <div class="sheet paper">
+            <h3>Document &amp; email targets</h3>
+            <p class="how">Real semantic HTML with explicit inline styles on every element. Absolute <code>pt</code>/<code>px</code> sizes, not <code>em</code> — Word doesn't do relative.</p>
+            <!-- table re-set from real `penman --for word` output -->
+            <table class="word-table">
+              <thead><tr><th>metric</th><th>target</th></tr></thead>
+              <tbody><tr><td>signups</td><td>4,000</td></tr><tr><td>churn</td><td>&lt; 2%</td></tr></tbody>
+            </table>
+          </div>
+          <p class="sheet-cap">the same table, set for word.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ how it works ============ -->
+  <section>
+    <div class="wrap">
+      <span class="eyebrow">How it works</span>
+      <h2>Three steps. No magic.</h2>
+      <div class="steps">
+        <div class="sheet step">
+          <span class="stepnum" aria-hidden="true">1</span>
+          <h3>Tokens</h3>
+          <p>Resolve the platform's recipe — fonts, sizes, colors, code styling — for light or dark. Your <code>~/.penman.json5</code> overrides merge in.</p>
+        </div>
+        <div class="sheet step">
+          <span class="stepnum" aria-hidden="true">2</span>
+          <h3>Render</h3>
+          <p><a href="https://github.com/markedjs/marked">marked</a> parses the markdown, <a href="https://github.com/highlightjs/highlight.js">highlight.js</a> colors the code, and every element gets explicit inline styles. Nothing left to strip.</p>
+        </div>
+        <div class="sheet step">
+          <span class="stepnum" aria-hidden="true">3</span>
+          <h3>Clipboard</h3>
+          <p>The HTML is hex-encoded and set as <code>«class HTML»</code> via <code>osascript</code>, with a plain-text fallback for targets that want none of it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ customize ============ -->
+  <section id="customize">
+    <div class="wrap">
+      <span class="eyebrow">Customize</span>
+      <h2>Your shop, your type.</h2>
+      <p class="sub">Every token — fonts, sizes, colors, code styling — can be overridden in <code>~/.penman.json5</code>. Globally, or per platform.</p>
+      <div class="sheet cmdsheet">
+        <button class="copybtn" type="button" data-copy="{
+  tokens: { codeFontFamily: 'Fira Code, monospace' },
+  platforms: {
+    slack: { tokens: { fontFamily: 'Inter, sans-serif' } },
+  },
+}">copy</button>
+        <pre>{
+  // everywhere
+  tokens: { codeFontFamily: 'Fira Code, monospace' },
+
+  // just slack
+  platforms: {
+    slack: { tokens: { fontFamily: 'Inter, sans-serif' } },
+  },
+}</pre>
+      </div>
+      <p class="sub" style="margin-top: var(--s4);"><code>penman --for slack --tokens</code> lists everything you can touch.</p>
+    </div>
+  </section>
+
+  <!-- ============ claude code ============ -->
+  <section id="install">
+    <div class="wrap">
+      <span class="eyebrow">For Claude Code</span>
+      <h2>Just say where it's going.</h2>
+      <p class="sub">No flags to remember. The penman MCP tools give Claude the converter — you talk like a person.</p>
+
+      <div class="sheet cmdsheet">
+        <div class="transcript">
+          <span class="t-label">you</span>
+          <p class="t-you">"pen that for teams"</p>
+          <span class="t-label">claude</span>
+          <p class="t-claude"><span class="ok">On your clipboard,</span> styled for Teams — Segoe UI, 14px, the works. &#8984;V away.</p>
+        </div>
+      </div>
+      <p class="alt-asks">also works: <em>"penman the release notes for slack"</em> · <em>"make this paste-ready for word, dark mode"</em> · <em>"what platforms can you style?"</em></p>
+
+      <ul class="tools">
+        <li><span class="tname">penman</span><span class="tdesc">convert and copy to the clipboard — the everyday one</span></li>
+        <li><span class="tname">penman_html</span><span class="tdesc">convert and return the HTML, clipboard untouched</span></li>
+        <li><span class="tname">penman_platforms</span><span class="tdesc">list every platform and its recipe</span></li>
+      </ul>
+
+      <p style="margin-top: var(--s5);">Install once, from the RTD marketplace:</p>
+      <div class="sheet cmdsheet">
+        <button class="copybtn" type="button" data-copy="/plugin marketplace add ryanthedev/rtd-claude-inn
+/plugin install penman@rtd
+/penman:install">copy</button>
+        <pre>/plugin marketplace add ryanthedev/rtd-claude-inn
+/plugin install penman@rtd
+/penman:install</pre>
+      </div>
+
+      <p class="sub" style="margin-top: var(--s5);">Prefer ceremony? <code>/penman:pen --slack ./notes.md</code> works too. So does the CLI: <code>penman --for word --theme dark notes.md</code></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ colophon ============ -->
+<footer>
+  <div class="wrap">
+    <p class="setline">This page is set in Fraunces, Archivo &amp; IBM Plex Mono — we'd never paste it anywhere.</p>
+    <p>penman needs macOS (clipboard via <code>osascript</code>) and <a href="https://bun.sh">Bun</a>. ISC license.<br>
+    Distributed through the <a href="https://github.com/ryanthedev/rtd-claude-inn">RTD marketplace</a> for Claude Code.</p>
+  </div>
+</footer>
+
+<script>
+// hero entrance choreography: strikes wipe in, then the stamp lands — once,
+// the first time the desk scrolls into view. See DESIGN.md "Motion".
+(function () {
+  var desk = document.querySelector(".desk");
+  if (!desk) return;
+  function play() { desk.classList.add("played"); }
+  if (!("IntersectionObserver" in window)) { play(); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { play(); io.disconnect(); }
+    });
+  }, { threshold: 0.25 });
+  io.observe(desk);
+})();
+
+// copy buttons (clipboard API needs a secure context; fall back for file://)
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } finally { document.body.removeChild(ta); }
+  return Promise.resolve();
+}
+document.querySelectorAll(".copybtn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    copyText(btn.getAttribute("data-copy")).then(function () {
+      btn.textContent = "copied.";
+      btn.classList.add("copied");
+      setTimeout(function () { btn.textContent = "copy"; btn.classList.remove("copied"); }, 2000);
+    });
+  });
+});
+</script>
+</body>
+</html>
