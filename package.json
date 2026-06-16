@@ -7,7 +7,9 @@
     "penman": "./bin/penman.js",
     "penman-mcp": "./src/mcp.js"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

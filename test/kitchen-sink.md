@@ -89,3 +89,53 @@ Start migrating now. The batch endpoint alone is worth it — teams that switche
 ---
 
 *Questions? Ping `#platform-eng` in Slack or open an issue on the [migration tracker](#).*
+
+---
+
+## Phase 2 test corpus additions
+
+The following constructs crash the current renderer (nested list, loose item) or
+render unstyled (blockquote, hr, task list, strikethrough, image). They are
+documented here for Phase 2 to use as test inputs once the renderer handles them.
+
+### Nested list (currently crashes convert() with "Token with 'list' type was not found")
+
+- Item A
+  - Sub 1
+  - Sub 2
+- Item B
+  - Sub 3
+    - Deep 1
+
+### Loose list items (currently crashes with "Token with 'paragraph' type was not found")
+
+- Item A
+
+- Item B (loose — blank line between items triggers paragraph wrapping)
+
+- Item C
+
+### Blockquote (currently renders unstyled <blockquote>)
+
+> This is a blockquote.
+> It spans multiple lines.
+
+### Thematic break / hr (currently renders bare <hr>)
+
+---
+
+### Task list (currently renders <input type="checkbox"> — stripped on paste)
+
+- [x] Completed task
+- [ ] Pending task
+- [x] Another done item
+
+### Strikethrough (currently renders unstyled <del>)
+
+This text has ~~struck-through words~~ in it.
+
+### Image (currently renders <img> — stripped on paste; should degrade to <a href>alt</a>)
+
+![Architecture diagram](https://example.com/arch.png)
+
+![](https://example.com/no-alt.png)
