@@ -1,8 +1,8 @@
 # penman
 
-You write markdown. You paste it somewhere. It looks like garbage.
+Claude just wrote you a clean migration guide. Now it has to go in front of other people, and those people live in Slack, a Google Doc, an Outlook thread. So you paste the markdown in. The table turns into a wall of pipes, the headings vanish, the code block loses its background, and the thing Claude made look sharp now looks like you didn't try.
 
-Penman fixes that. Give it markdown and a target (Slack, Word, Gmail, whatever), and it puts styled rich text on your clipboard. Cmd+V. Done. Code blocks have syntax highlighting. Tables have borders. Headings look like headings. Fonts match what the app actually uses.
+penman handles that one handoff. Give it markdown and a target, and it drops styled rich text on your clipboard. Cmd+V into the app. Code keeps its syntax colors, tables keep their borders, headings look like headings, and the font matches what the app actually uses: Slack gets Lato, Word gets Calibri, Gmail gets Arial. You stop thinking about it.
 
 ## Install
 
@@ -13,11 +13,13 @@ From the [RTD marketplace](https://github.com/ryanthedev/rtd-claude-inn):
 /plugin install penman@rtd
 ```
 
-Then run `/penman:install` to pull dependencies and seed `~/.penman.json5` (needs [Bun](https://bun.sh)).
+Then run `/penman:install` to pull dependencies and seed `~/.penman.json5`. You'll need [Bun](https://bun.sh).
 
-After updates, re-run `/penman:install` — the cached plugin path changes with each version.
+Re-run `/penman:install` after every update. The cached plugin path changes with each version, so the old one goes stale.
 
 ## Usage
+
+Tell Claude where it's going:
 
 ```
 /penman:pen --slack
@@ -25,9 +27,7 @@ After updates, re-run `/penman:install` — the cached plugin path changes with 
 /penman:pen --word --dark
 ```
 
-Pass a platform flag. Optionally pass a file or inline text. If you leave something out, it asks.
-
-There's also a CLI if you want it:
+Pass a platform flag. Add a file or some inline text if you want, or leave it off and penman asks. There's a plain CLI too:
 
 ```bash
 penman --for slack < notes.md
@@ -36,41 +36,47 @@ penman --for word --theme dark notes.md
 
 ### MCP tools
 
-Three tools Claude can call directly:
+Four tools Claude can call on its own:
 
-- `penman` — convert and copy to clipboard
-- `penman_html` — convert and return the HTML (doesn't touch clipboard)
-- `penman_platforms` — list what's available
+- `penman`: convert and copy to the clipboard
+- `penman_html`: convert and hand back the HTML, clipboard untouched
+- `penman_craft`: convert to Craft blocks (JSON), for writing straight into Craft
+- `penman_platforms`: list what's on offer
 
 ## Platforms
 
-| | |
+| Group | Targets |
 |---|---|
 | Chat | slack, teams, discord |
 | Document | word, google-docs, notion |
 | Email | outlook, gmail |
 | Wiki | confluence, jira |
 | Presentation | powerpoint, google-slides |
+| Notes | craft |
 
-Each one has its own font stack, sizes, and colors matched to what the app uses natively. Slack gets Lato at 15px. Word gets Calibri at 11pt. Gmail gets Arial at 14px. And so on.
+Thirteen of them. Each carries its own font stack, sizes, and colors, matched to what the app uses natively. Slack is Lato at 15px. Word is Calibri at 11pt. Notion is its system-ui stack at 16px. The values aren't approximations; they're what each app actually renders.
+
+### Craft is special
+
+Craft has a real block API, not just a paste handler. So penman talks to it two ways. `penman --for craft` does the usual thing and puts styled HTML on the clipboard. But `penman --for craft --craft-blocks` (and the `penman_craft` tool) skips the clipboard and emits Craft's own block JSON instead, which Claude can write into a Craft doc directly with the Craft MCP. Higher fidelity: real toggles, real dividers, real code blocks.
 
 ## How it works
 
 Three steps:
 
-1. **Tokens** — pick the right fonts, colors, and code styling for the platform and theme (light/dark). User overrides from `~/.penman.json5` get merged in.
-2. **Render** — [marked](https://github.com/markedjs/marked) parses the markdown, [highlight.js](https://github.com/highlightjs/highlight.js) handles syntax highlighting, and everything gets inline `style` attributes. No `<style>` blocks. Every paste target strips those.
-3. **Clipboard** — hex-encode the HTML, set it via `osascript` as `«class HTML»` with a plain-text fallback.
+1. **Tokens**: pick the fonts, colors, and code styling for the platform and theme. Your overrides from `~/.penman.json5` get merged on top.
+2. **Render**: [marked](https://github.com/markedjs/marked) parses the markdown, [highlight.js](https://github.com/highlightjs/highlight.js) colors the code, and every element gets an inline `style` attribute. No `<style>` blocks anywhere. Paste targets strip those on sight.
+3. **Clipboard**: hex-encode the HTML and set it through `osascript` as `«class HTML»`, with a plain-text fallback for apps that want it.
 
-### Chat vs. document rendering
+### Chat platforms get a different render
 
-Slack, Teams, and Discord strip most HTML structure on paste. `<h1>` becomes nothing. `<p>` collapses. `<table>` dumps cell contents inline. So penman renders chat platforms differently: `<strong>` for headings, `<br>` for spacing, text-aligned tables inside `<pre>` blocks.
+Slack, Teams, and Discord tear out most HTML structure when you paste. An `<h1>` becomes nothing. A `<p>` collapses. A `<table>` dumps its cells inline as a run-on mess. So penman renders those three differently: bold for headings, `<br>` for spacing, and tables drawn as text inside a `<pre>` block so the columns still line up.
 
-Document and email platforms (Word, Notion, Outlook, Gmail) get real semantic HTML with explicit inline styles on every element. Absolute `pt`/`px` font sizes, not `em`.
+Word, Notion, Outlook, and Gmail are easier. They take real semantic HTML with explicit inline styles on every element, and absolute `pt`/`px` sizes instead of `em`.
 
 ### Custom tokens
 
-Override anything globally or per-platform in `~/.penman.json5`:
+Override anything, globally or per platform, in `~/.penman.json5`:
 
 ```json5
 {
@@ -85,12 +91,12 @@ Override anything globally or per-platform in `~/.penman.json5`:
 }
 ```
 
-Run `penman --for <platform> --tokens` to see what's available.
+Run `penman --for <platform> --tokens` to dump what's there.
 
 ## Requirements
 
-- macOS (clipboard uses `osascript` and `textutil`)
-- [Bun](https://bun.sh)
+- macOS. The clipboard path uses `osascript` and `textutil`.
+- [Bun](https://bun.sh).
 
 ## License
 

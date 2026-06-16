@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>penman — markdown to rich text for any platform</title>
-<meta name="description" content="You write markdown. You paste it somewhere. It looks like garbage. Penman fixes that — platform-styled rich text on your clipboard, fonts matched to the app, code highlighted, tables that survive.">
-<meta property="og:title" content="penman — markdown to rich text for any platform">
+<title>penman: markdown to rich text for any platform</title>
+<meta name="description" content="Claude writes you markdown. Then it has to go to other people in Slack, a doc, or email, and the paste mangles it. penman fixes that paste: rich text on your clipboard, styled the way the app actually renders. ⌘V. Done.">
+<meta property="og:title" content="penman: markdown to rich text for any platform">
 <meta property="og:description" content="Markdown in, platform-styled rich text on the clipboard. 13 platforms, 1 command, 0 style blocks.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#faf8f8">
@@ -339,12 +339,12 @@ footer .setline { font: 600 italic 20px var(--display); color: var(--text); marg
   <section class="hero">
     <div class="wrap">
       <h1>
-        <span>Claude writes markdown.</span>
+        <span>Claude writes it clean.</span>
         <span>You paste it into Teams.</span>
-        <span>It looks like <em class="squiggle">garbage</em>.</span>
+        <span>Your team sees a <em class="squiggle">mess</em>.</span>
       </h1>
       <p class="fix">Penman bridges the gap.</p>
-      <p class="lede">The classic Claude-to-<code>&lt;xyz&gt;</code> converter. Say where the text is going and get platform-styled rich text on the clipboard — fonts matched to the app, code highlighted, tables that survive. <strong>&#8984;V. Done.</strong></p>
+      <p class="lede">Claude's answer is good. Now it has to land in front of someone else. Tell penman where it's going and get rich text on your clipboard, styled for that app: fonts matched, code highlighted, tables that survive the paste. <strong>&#8984;V. Done.</strong></p>
       <div class="cta-row">
         <a class="btn" href="#install">Install for Claude Code</a>
         <a class="btn btn--ghost" href="#recipes">See the recipes</a>
@@ -355,7 +355,7 @@ footer .setline { font: 600 italic 20px var(--display); color: var(--text); marg
         <div>
           <span class="sheet-label">Before · raw paste</span>
           <div class="sheet sheet--hero sheet--tilt paper">
-            <span class="margin-note" aria-hidden="true">garbage.</span>
+            <span class="margin-note" aria-hidden="true">a mess.</span>
             <div class="raw"># Q3 launch notes
 
 Ship date is <span class="strike strike--a">**Oct 14**</span>. The `--dark` flag is live.
@@ -389,15 +389,15 @@ const html = penman(notes, { for: "word" });
     <div class="wrap">
       <div class="num">
         <span class="n">13</span>
-        <p>platforms, each with the fonts, sizes, and colors the app uses natively.</p>
+        <p>places your reader already is. Chat, docs, email, wikis, decks, notes.</p>
       </div>
       <div class="num">
         <span class="n">1</span>
-        <p>sentence between Claude's answer and paste-ready rich text.</p>
+        <p>thing you do: name the target. penman handles the formatting.</p>
       </div>
       <div class="num">
         <span class="n">0</span>
-        <p><code>&lt;style&gt;</code> blocks in the output. Every paste target strips them — so every style is inline.</p>
+        <p>cleanup after you paste. It lands the way Claude meant it.</p>
       </div>
     </div>
   </section>
@@ -407,7 +407,7 @@ const html = penman(notes, { for: "word" });
     <div class="wrap">
       <span class="eyebrow">The platforms</span>
       <h2>It knows what Slack renders.</h2>
-      <p class="sub">Thirteen targets — chat, documents, email, wikis, decks, notes. Real values from <code>src/tokens.js</code>, not approximations: this is what each platform actually gets.</p>
+      <p class="sub">Thirteen targets: chat, documents, email, wikis, decks, notes. Real values pulled from <code>src/tokens.js</code>, not approximations. This is what each app actually renders, so it never looks off to the person reading it.</p>
       <div class="sheet table-sheet">
         <div class="table-scroll">
           <table class="recipes">
@@ -433,7 +433,7 @@ const html = penman(notes, { for: "word" });
           </table>
         </div>
       </div>
-      <p class="footnote">* 1.46668 — yes, really. That's Slack's actual line height.</p>
+      <p class="footnote">* 1.46668. Yes, really: Slack's actual line height.</p>
     </div>
   </section>
 
@@ -442,12 +442,12 @@ const html = penman(notes, { for: "word" });
     <div class="wrap">
       <span class="eyebrow">The hard part</span>
       <h2>Slack eats your &lt;h1&gt;.</h2>
-      <p class="sub">Teams collapses your <code>&lt;p&gt;</code>. Discord dumps your table's cells into one line. Chat apps strip structure on paste — so penman doesn't send them structure.</p>
+      <p class="sub">Teams collapses your <code>&lt;p&gt;</code>. Discord dumps your table's cells into one line. Chat apps strip structure on paste, so penman doesn't send them structure.</p>
       <div class="versus">
         <div>
           <div class="sheet paper">
             <h3>Chat targets</h3>
-            <p class="how"><code>&lt;strong&gt;</code> for headings, <code>&lt;br&gt;</code> for spacing — and tables re-set as aligned text inside <code>&lt;pre&gt;</code>, because that's the only table Slack can't ruin:</p>
+            <p class="how"><code>&lt;strong&gt;</code> for headings, <code>&lt;br&gt;</code> for spacing, and tables re-set as aligned text inside <code>&lt;pre&gt;</code>. That's the one table layout Slack can't ruin:</p>
             <!-- table excerpt from real `penman --for slack` output -->
             <div class="slack-pre">metric  | target
 --------+-------
@@ -459,7 +459,7 @@ churn   | &lt; 2%  </div>
         <div>
           <div class="sheet paper">
             <h3>Document &amp; email targets</h3>
-            <p class="how">Real semantic HTML with explicit inline styles on every element. Absolute <code>pt</code>/<code>px</code> sizes, not <code>em</code> — Word doesn't do relative.</p>
+            <p class="how">Real semantic HTML with explicit inline styles on every element. Absolute <code>pt</code>/<code>px</code> sizes, not <code>em</code>. Word doesn't do relative.</p>
             <!-- table re-set from real `penman --for word` output -->
             <table class="word-table">
               <thead><tr><th>metric</th><th>target</th></tr></thead>
@@ -481,7 +481,7 @@ churn   | &lt; 2%  </div>
         <div class="sheet step">
           <span class="stepnum" aria-hidden="true">1</span>
           <h3>Tokens</h3>
-          <p>Resolve the platform's recipe — fonts, sizes, colors, code styling — for light or dark. Your <code>~/.penman.json5</code> overrides merge in.</p>
+          <p>Resolve the platform's recipe (fonts, sizes, colors, code styling) for light or dark. Your <code>~/.penman.json5</code> overrides merge in.</p>
         </div>
         <div class="sheet step">
           <span class="stepnum" aria-hidden="true">2</span>
@@ -502,7 +502,7 @@ churn   | &lt; 2%  </div>
     <div class="wrap">
       <span class="eyebrow">Customize</span>
       <h2>Your shop, your type.</h2>
-      <p class="sub">Every token — fonts, sizes, colors, code styling — can be overridden in <code>~/.penman.json5</code>. Globally, or per platform.</p>
+      <p class="sub">Every token (fonts, sizes, colors, code styling) can be overridden in <code>~/.penman.json5</code>. Globally, or per platform.</p>
       <div class="sheet cmdsheet">
         <button class="copybtn" type="button" data-copy="{
   tokens: { codeFontFamily: 'Fira Code, monospace' },
@@ -529,21 +529,22 @@ churn   | &lt; 2%  </div>
     <div class="wrap">
       <span class="eyebrow">For Claude Code</span>
       <h2>Just say where it's going.</h2>
-      <p class="sub">No flags to remember. The penman MCP tools give Claude the converter — you talk like a person.</p>
+      <p class="sub">No flags to remember. The penman MCP tools hand Claude the converter, so you just talk like a person.</p>
 
       <div class="sheet cmdsheet">
         <div class="transcript">
           <span class="t-label">you</span>
           <p class="t-you">"pen that for teams"</p>
           <span class="t-label">claude</span>
-          <p class="t-claude"><span class="ok">On your clipboard,</span> styled for Teams — Segoe UI, 14px, the works. &#8984;V away.</p>
+          <p class="t-claude"><span class="ok">On your clipboard,</span> styled for Teams: Segoe UI, 14px, the works. &#8984;V away.</p>
         </div>
       </div>
       <p class="alt-asks">also works: <em>"penman the release notes for slack"</em> · <em>"make this paste-ready for word, dark mode"</em> · <em>"what platforms can you style?"</em></p>
 
       <ul class="tools">
-        <li><span class="tname">penman</span><span class="tdesc">convert and copy to the clipboard — the everyday one</span></li>
+        <li><span class="tname">penman</span><span class="tdesc">convert and copy to the clipboard (the everyday one)</span></li>
         <li><span class="tname">penman_html</span><span class="tdesc">convert and return the HTML, clipboard untouched</span></li>
+        <li><span class="tname">penman_craft</span><span class="tdesc">convert to Craft blocks (JSON) for writing straight into Craft</span></li>
         <li><span class="tname">penman_platforms</span><span class="tdesc">list every platform and its recipe</span></li>
       </ul>
 
@@ -566,7 +567,7 @@ churn   | &lt; 2%  </div>
 <!-- ============ colophon ============ -->
 <footer>
   <div class="wrap">
-    <p class="setline">This page is set in Fraunces, Archivo &amp; IBM Plex Mono — we'd never paste it anywhere.</p>
+    <p class="setline">This page is set in Fraunces, Archivo &amp; IBM Plex Mono. We'd never paste it anywhere.</p>
     <p>penman needs macOS (clipboard via <code>osascript</code>) and <a href="https://bun.sh">Bun</a>. ISC license.<br>
     Distributed through the <a href="https://github.com/ryanthedev/rtd-claude-inn">RTD marketplace</a> for Claude Code.</p>
   </div>

@@ -4,10 +4,10 @@
 **DNA:** Neo-Brutalist + type voice from Editorial Minimalism · **Dominant axis:** layout discipline
 
 ## Direction
-The proofreader's desk. Markdown comes in wrong, gets marked up in red, leaves correct — the site stages that correction as physical paper on a desk. Neo-brutalist bones (hard borders, offset shadows, sheets that rotate) carry the README's dry wit ("It looks like garbage."), while Fraunces Black display type supplies the craftsman's letterpress credibility. Audience is Claude Code users; the page must itself be proof that penman's typographic obsession is real — every px value shown is the actual shipping value from `src/tokens.js`.
+The proofreader's desk. Markdown comes in wrong, gets marked up in red, leaves correct — the site stages that correction as physical paper on a desk. Neo-brutalist bones (hard borders, offset shadows, sheets that rotate) carry the README's dry wit ("Your team sees a mess."), while Fraunces Black display type supplies the craftsman's letterpress credibility. Audience is Claude Code users; the page must itself be proof that penman's typographic obsession is real — every px value shown is the actual shipping value from `src/tokens.js`.
 
 ## Signature move
-The hero before/after is two physical sheets of paper. The "before" sheet is rotated −1.2° and shows a real garbage paste, with red proof-strikes (accent-9 strokes) through the worst failures and a red Fraunces-italic margin note. The "after" sheet sits dead straight at 0°, shows the penman output, and carries the page's ONLY cyan element: a press stamp ("set by penman"). On hover the after-sheet translates −2px,−2px and its offset shadow grows 6px→8px — paper being slid into place. 150ms, sharp ease-out.
+The hero before/after is two physical sheets of paper. The "before" sheet is rotated −1.2° and shows a real broken paste, with red proof-strikes (accent-9 strokes) through the worst failures and a red Fraunces-italic margin note. The "after" sheet sits dead straight at 0°, shows the penman output, and carries the page's ONLY cyan element: a press stamp ("set by penman"). On hover the after-sheet translates −2px,−2px and its offset shadow grows 6px→8px — paper being slid into place. 150ms, sharp ease-out.
 
 ## Type
 - Display: Fraunces (Google Fonts; weights 600 italic, 900) — fallback: Georgia, serif
@@ -176,8 +176,8 @@ Color roles:
 
 ## Page structure (information design — first-class, foundations §3)
 Problem-first narrative (rev 2026-06-06): the gap between Claude's markdown and where it has to land.
-1. **Hero — the problem** — "Claude writes markdown. You paste it into Teams. It looks like garbage." → "Penman bridges the gap." The classic Claude-to-&lt;xyz&gt; converter. Two sheets (signature move), CTAs
-2. **Numbers strip** — oversized Fraunces numerals: 12 platforms · 1 sentence · 0 `<style>` blocks (everything inline)
+1. **Hero — the problem (outcome-first / spine A)** — "Claude writes it clean. You paste it into Teams. Your team sees a mess." → "Penman bridges the gap." The frame is the handoff to a human reader, not the converter mechanics. Two sheets (signature move), CTAs
+2. **Numbers strip** — oversized Fraunces numerals, reader-framed (not implementation brag): 13 places your reader is · 1 thing you do · 0 cleanup after paste
 3. **The platforms** — the brag table: every platform's real recipe (slack · Lato · 15px …), 1px ruled, mono values
 4. **The hard part** — chat-vs-document rendering insight (Slack strips your HTML; penman renders differently per target)
 5. **How it works** — Tokens → Render → Clipboard as three small sheets
