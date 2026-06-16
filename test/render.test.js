@@ -386,70 +386,289 @@ describe("characterization — body wrapper", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Dirty test: convert() must throw (not silently fail) for crash inputs
-// This guards the regression: Phase 2 fix must eliminate these throws.
-// If convert() starts silently returning empty output, this test fails —
-// which means the fix must be validated properly, not by swallowing errors.
+// Regression guard: the exact inputs that crashed before Phase 2 must now
+// render without throwing. These were Phase-1 crash detection tests; after
+// the list handler switched from parseInline to parse(), they must pass.
 // ---------------------------------------------------------------------------
-describe("crash detection — nested list and loose item currently throw", () => {
-  test("nested list throws on notion (current behavior — crash to be fixed in Phase 2)", () => {
+describe("regression — formerly-crashing inputs now render without throwing", () => {
+  test("nested list no longer throws on notion (Phase 2 fix verified)", () => {
     const nestedMd = "- Item A\n  - Sub 1\n  - Sub 2\n- Item B";
-    assert.throws(
-      () => convert(nestedMd, resolveTokens("notion", "light"), "notion"),
-      /Token with "list" type was not found/,
-      "nested list must throw the known parseInline error"
-    );
+    // Must not throw — and must produce visible content
+    const html = bodyOf(convert(nestedMd, resolveTokens("notion", "light"), "notion"));
+    assert.ok(html.includes("Item A"), "nested list: Item A must appear in output");
+    assert.ok(html.includes("Sub 1"), "nested list: Sub 1 must appear in output");
+    assert.ok(html.includes("Sub 2"), "nested list: Sub 2 must appear in output");
+    assert.ok(html.includes("Item B"), "nested list: Item B must appear in output");
   });
 
-  test("loose list item throws on notion (current behavior — crash to be fixed in Phase 2)", () => {
+  test("loose list item no longer throws on notion (Phase 2 fix verified)", () => {
     const looseMd = "- Item A\n\n- Item B (loose)";
-    assert.throws(
-      () => convert(looseMd, resolveTokens("notion", "light"), "notion"),
-      /Token with "paragraph" type was not found/,
-      "loose list item must throw the known parseInline error"
-    );
+    // Must not throw — and must produce visible content
+    const html = bodyOf(convert(looseMd, resolveTokens("notion", "light"), "notion"));
+    assert.ok(html.includes("Item A"), "loose list: Item A must appear in output");
+    assert.ok(html.includes("Item B (loose)"), "loose list: Item B must appear in output");
   });
 });
 
 // ---------------------------------------------------------------------------
-// DW-1.3 — Phase-2 targets (todo stubs)
-// Each names the expected post-fix behavior for Phase 2 to implement.
+// DW-2.1 — Nested and loose list items render without crashing
 // ---------------------------------------------------------------------------
-describe("DW-1.3 Phase-2 targets — todo stubs", () => {
-  // NESTED LIST CRASH
-  // Expected post-fix: nested list items render via block parsing (not parseInline).
-  // notion: <ul><li>Item A<ul><li>Sub 1</li><li>Sub 2</li></ul></li><li>Item B</li></ul>
-  // slack: "• Item A\n  ◦ Sub 1\n  ◦ Sub 2\n• Item B" (or equivalent chat-mode flattened)
-  test.todo("DW_2_1 nested-list renders without crashing on chat + document platforms");
+describe("DW-2.1 — nested and loose list items", () => {
+  // DW-2.1: nested list on document platforms (notion/outlook)
+  test("DW_2_1_nested_list_notion", () => {
+    const md = "- Item A\n  - Sub 1\n  - Sub 2\n- Item B";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      // Outer ul
+      '<ul style="margin: 0 0 12px 0; padding-left: 24px;">',
+      // Outer Item A li wrapping inner ul
+      '<li style="margin: 0 0 4px 0;">Item A',
+      // Inner nested ul appears inside Item A's li
+      '<ul style="margin: 0 0 12px 0; padding-left: 24px;"><li style="margin: 0 0 4px 0;">Sub 1</li><li style="margin: 0 0 4px 0;">Sub 2</li></ul>',
+      // Item B is a sibling at the outer level
+      '<li style="margin: 0 0 4px 0;">Item B</li>',
+    ], "nested-list/notion");
+    // Must not contain <input> (no task glyphs bleed in)
+    assert.ok(!html.includes("<input"), "nested-list/notion: must not contain <input>");
+  });
 
-  // LOOSE ITEM CRASH
-  // Expected post-fix: loose list items (separated by blank lines, containing paragraph tokens)
-  // render via block parsing. Each item's paragraph content renders without throwing.
-  test.todo("DW_2_1 loose list item renders without crashing on chat + document platforms");
+  // DW-2.1: nested list on chat platforms (slack)
+  test("DW_2_1_nested_list_slack", () => {
+    const md = "- Item A\n  - Sub 1\n  - Sub 2\n- Item B";
+    const html = bodyOf(convert(md, resolveTokens("slack", "light"), "slack"));
+    // Chat: all items appear as bullet-prefixed lines; nested items are
+    // flattened into the same flow (structure lost, content preserved)
+    assertContains(html, [
+      "• Item A",
+      "• Sub 1",
+      "• Sub 2",
+      "• Item B",
+    ], "nested-list/slack");
+    // No structural list tags on chat
+    assert.ok(!html.includes("<ul"), "nested-list/slack: must not contain <ul>");
+    assert.ok(!html.includes("<li"), "nested-list/slack: must not contain <li>");
+  });
 
-  // BLOCKQUOTE
-  // Expected post-fix: document/email → <blockquote> with border-left/padding styling;
-  // chat → visible text fallback (e.g., "> " prefix per line or styled inline span)
-  test.todo("DW_2_2 blockquote renders styled on document/email platforms and as visible text on chat platforms");
+  // DW-2.1: deeply nested list (3 levels) on document platforms
+  test("DW_2_1_nested_list_3_levels_notion", () => {
+    const md = "- L1\n  - L2\n    - L3 deep";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, ["L1", "L2", "L3 deep"], "nested-list/3-levels/notion");
+    // Must have 3 nested ul elements
+    const ulCount = (html.match(/<ul /g) || []).length;
+    assert.ok(ulCount >= 3, `nested-list/3-levels/notion: expected ≥3 <ul>, got ${ulCount}`);
+  });
 
-  // HR (thematic break)
-  // Expected post-fix: document/email → <hr style="..."> with border styling;
-  // chat → visible text fallback (e.g., "───" or "---" in a span)
-  test.todo("DW_2_2 hr renders styled on document/email platforms and as visible text on chat platforms");
+  // DW-2.1: loose list items (blank line between items) on document platforms
+  test("DW_2_1_loose_list_notion", () => {
+    const md = "- Item A\n\n- Item B (loose)\n\n- Item C";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    // Loose items have paragraph tokens — parse() wraps them in <p>; the li still renders
+    assertContains(html, [
+      '<ul style="margin: 0 0 12px 0; padding-left: 24px;">',
+      "Item A",
+      "Item B (loose)",
+      "Item C",
+    ], "loose-list/notion");
+    // Must not have thrown (if we get here, it didn't throw)
+    assert.ok(html.includes("<li"), "loose-list/notion: must contain <li> elements");
+  });
 
-  // TASK LIST
-  // Expected post-fix: task items render ☐ (unchecked) and ☑ (checked) glyphs instead of
-  // <input type="checkbox"> elements, which are stripped on paste.
-  test.todo("DW_2_3 task list items render ☐/☑ glyphs, never <input> elements");
+  // DW-2.1: loose list items on chat platforms
+  test("DW_2_1_loose_list_slack", () => {
+    const md = "- Item A\n\n- Item B (loose)";
+    const html = bodyOf(convert(md, resolveTokens("slack", "light"), "slack"));
+    assertContains(html, [
+      "• Item A",
+      "• Item B (loose)",
+    ], "loose-list/slack");
+    assert.ok(!html.includes("<ul"), "loose-list/slack: must not contain <ul>");
+  });
 
-  // STRIKETHROUGH
-  // Expected post-fix: ~~text~~ renders as <del style="...">text</del> (or platform fallback).
-  // Current behavior produces unstyled <del>; Phase 2 adds inline styles.
-  test.todo("DW_2_3 strikethrough renders as styled <del> with appropriate text-decoration");
+  // DW-2.1: ordered list numbering preserved with block content
+  test("DW_2_1_ordered_list_notion", () => {
+    const md = "1. First item\n2. Second item\n3. Third item";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      '<ol style="margin: 0 0 12px 0; padding-left: 24px;">',
+      "First item",
+      "Second item",
+      "Third item",
+    ], "ordered-list/notion");
+  });
+});
 
-  // IMAGE
-  // Expected post-fix: ![alt](url) renders as <a href="url">alt</a> (link-with-alt degradation)
-  // so paste handlers keep the destination + meaning even when <img> is stripped.
-  // Empty alt → URL as label: <a href="url">url</a>
-  test.todo("DW_2_3 image renders as <a href=url>alt</a>; empty alt falls back to URL as label");
+// ---------------------------------------------------------------------------
+// DW-2.2 — Blockquote and hr: styled on document/email, text fallback on chat
+// ---------------------------------------------------------------------------
+describe("DW-2.2 — blockquote and hr", () => {
+  // DW-2.2: blockquote on a document platform (notion)
+  test("DW_2_2_blockquote_notion", () => {
+    const md = "> This is a blockquote.\n> It spans multiple lines.";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      // Styled blockquote with border-left using notion's codeBorder token
+      "<blockquote style=\"border-left: 3px solid #e4e3e0;",
+      // Italic style applied to the blockquote
+      "font-style: italic;",
+      // Content survives
+      "This is a blockquote.",
+      "It spans multiple lines.",
+    ], "blockquote/notion");
+    // Must not be stripped (not an <input> or invisible element)
+    assert.ok(html.includes("<blockquote"), "blockquote/notion: must contain <blockquote>");
+  });
+
+  // DW-2.2: blockquote visible text fallback on chat platform (slack)
+  test("DW_2_2_blockquote_slack", () => {
+    const md = "> This is a blockquote.\n> It spans multiple lines.";
+    const html = bodyOf(convert(md, resolveTokens("slack", "light"), "slack"));
+    // Chat: no <blockquote> (stripped on paste) — visible text with "> " prefix
+    assertContains(html, [
+      // Each line prefixed with "> " in a white-space:pre span
+      "white-space: pre;",
+      // The "> " prefix must appear for each content line
+      "> This is a blockquote.",
+      "> It spans multiple lines.",
+    ], "blockquote/slack");
+    // Must not emit a bare unstyled <blockquote> that would be stripped
+    assert.ok(!html.includes("<blockquote"), "blockquote/slack: must not contain <blockquote>");
+    // Content must still appear
+    assert.ok(html.includes("This is a blockquote."), "blockquote/slack: content must be visible");
+  });
+
+  // DW-2.2: blockquote on email platform (outlook) — must be styled, not chat fallback
+  test("DW_2_2_blockquote_outlook", () => {
+    const md = "> A quote for email.";
+    const html = bodyOf(convert(md, resolveTokens("outlook", "light"), "outlook"));
+    // Outlook is not a chat platform — structural blockquote must be used
+    assertContains(html, [
+      "<blockquote style=\"border-left: 3px solid",
+      "A quote for email.",
+    ], "blockquote/outlook");
+  });
+
+  // DW-2.2: hr on a document platform (notion)
+  test("DW_2_2_hr_notion", () => {
+    const md = "---";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      // Styled hr with notion's border token
+      '<hr style="border: none; border-top: 1px solid #e4e3e0; margin: 16px 0;">',
+    ], "hr/notion");
+  });
+
+  // DW-2.2: hr visible text fallback on chat platform (slack)
+  test("DW_2_2_hr_slack", () => {
+    const md = "---";
+    const html = bodyOf(convert(md, resolveTokens("slack", "light"), "slack"));
+    // Chat: <hr> is stripped on paste — render Unicode rule characters instead
+    assertContains(html, [
+      "────────────────────",
+    ], "hr/slack");
+    // Must not emit a bare <hr> that would vanish on paste
+    assert.ok(!html.includes("<hr"), "hr/slack: must not contain <hr>");
+  });
+
+  // DW-2.2: hr on email platform (outlook) — styled, not chat fallback
+  test("DW_2_2_hr_outlook", () => {
+    const md = "---";
+    const html = bodyOf(convert(md, resolveTokens("outlook", "light"), "outlook"));
+    assertContains(html, [
+      '<hr style="border: none; border-top: 1px solid #e0e0e0; margin: 16px 0;">',
+    ], "hr/outlook");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DW-2.3 — Task lists, strikethrough, and images
+// ---------------------------------------------------------------------------
+describe("DW-2.3 — task lists, strikethrough, images", () => {
+  // DW-2.3: task list glyphs on a document platform (notion)
+  test("DW_2_3_task_list_notion", () => {
+    const md = "- [x] Completed task\n- [ ] Pending task\n- [x] Another done item";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    // Glyphs must appear instead of <input>
+    assertContains(html, [
+      "☑ Completed task",
+      "☐ Pending task",
+      "☑ Another done item",
+    ], "task-list/notion");
+    // No <input> elements — they are stripped on paste
+    assert.ok(!html.includes("<input"), "task-list/notion: must not contain <input>");
+  });
+
+  // DW-2.3: task list glyphs on chat platform (slack)
+  test("DW_2_3_task_list_slack", () => {
+    const md = "- [x] Completed\n- [ ] Pending";
+    const html = bodyOf(convert(md, resolveTokens("slack", "light"), "slack"));
+    assertContains(html, [
+      "☑ Completed",
+      "☐ Pending",
+    ], "task-list/slack");
+    assert.ok(!html.includes("<input"), "task-list/slack: must not contain <input>");
+  });
+
+  // DW-2.3: mixed task and normal items (normal items must not get glyphs)
+  test("DW_2_3_task_list_mixed_notion", () => {
+    const md = "- [x] Done\n- [ ] Pending\n- Normal item";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, ["☑ Done", "☐ Pending", "Normal item"], "task-list/mixed/notion");
+    assert.ok(!html.includes("<input"), "task-list/mixed/notion: no <input>");
+    // Normal item must not have a glyph prefix
+    assert.ok(!html.match(/[☐☑] Normal item/), "task-list/mixed/notion: normal item must not have glyph");
+  });
+
+  // DW-2.3: strikethrough renders with inline text-decoration style
+  test("DW_2_3_strikethrough_notion", () => {
+    const md = "This has ~~struck-through~~ words.";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      '<del style="text-decoration: line-through;">struck-through</del>',
+    ], "strikethrough/notion");
+  });
+
+  // DW-2.3: strikethrough on chat platform (del is inline, survives paste)
+  test("DW_2_3_strikethrough_slack", () => {
+    const md = "~~crossed out~~";
+    const html = bodyOf(convert(md, resolveTokens("slack", "light"), "slack"));
+    assertContains(html, [
+      '<del style="text-decoration: line-through;">crossed out</del>',
+    ], "strikethrough/slack");
+  });
+
+  // DW-2.3: image renders as <a href>alt</a> (not <img> which is stripped on paste)
+  test("DW_2_3_image_notion", () => {
+    const md = "![Architecture diagram](https://example.com/arch.png)";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      // Link-with-alt: destination preserved, alt text as label
+      '<a href="https://example.com/arch.png"',
+      'Architecture diagram',
+    ], "image/notion");
+    // No <img> — stripped on paste, losing the URL
+    assert.ok(!html.includes("<img"), "image/notion: must not contain <img>");
+  });
+
+  // DW-2.3: image with empty alt falls back to URL as label
+  test("DW_2_3_image_empty_alt_notion", () => {
+    const md = "![](https://example.com/no-alt.png)";
+    const html = bodyOf(convert(md, resolveTokens("notion", "light"), "notion"));
+    assertContains(html, [
+      // URL itself is the link label when alt is empty
+      '<a href="https://example.com/no-alt.png"',
+      "https://example.com/no-alt.png",
+    ], "image/empty-alt/notion");
+    assert.ok(!html.includes("<img"), "image/empty-alt/notion: must not contain <img>");
+  });
+
+  // DW-2.3: image on email platform (outlook) — link colors are inlined by post-pass
+  test("DW_2_3_image_outlook", () => {
+    const md = "![Diagram](https://example.com/img.png)";
+    const html = convert(md, resolveTokens("outlook", "light"), "outlook");
+    // Email post-pass inlines link colors onto <a> tags
+    assert.ok(html.includes("https://example.com/img.png"), "image/outlook: URL must appear");
+    assert.ok(html.includes("Diagram"), "image/outlook: alt text must appear");
+    assert.ok(!html.includes("<img"), "image/outlook: must not contain <img>");
+  });
 });
