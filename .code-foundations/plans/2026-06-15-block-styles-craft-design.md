@@ -219,3 +219,13 @@ Summary: Added `npm test` (node:test, no new deps) with 23 characterization asse
 - [x] Committed
 Commit: 8061674
 Summary: Fixed the nested/loose-list crash (parseInline → parser.parse for block item content) and added blockquote, hr, task-list ☐/☑ glyphs, strikethrough, and image→link-with-alt handlers — each with a chat-mode fallback. 43/43 tests green (0 todo). convert() signature unchanged; HTML clipboard model preserved (no &lt;style&gt; blocks).
+
+### Catch-up REVIEW: Phases 1-2 (sonnet)
+- [x] PASS — all DW-1.x/DW-2.x + 6 edge cases verified with execution evidence; no regressions; formerly-crashing nested list confirmed rendering. Review: .code-foundations/build/2026-06-15-block-styles-craft-design-catchup-phases-1-2-review.md
+
+### Phase 3: Craft support (both modes) (Gate: Full)
+- [x] BUILD: Discovery + design + implementation (stub → implement → validate) complete
+- [x] REVIEW: Verification passed (PASS — all 4 DW + 6 edge cases, execution evidence)
+- [x] Committed
+Commit: 32f6ea4
+Summary: Added Craft both ways — Mode B `craft` HTML platform (ALL_PLATFORMS→13) and Mode A `src/craft.js` `toCraftBlocks(md)` deep module + `penman_craft` MCP tool + `--craft-blocks` CLI returning Craft block JSON (schema verified against the live Craft MCP). Boundary-validated; unsupported constructs degrade visibly. 72/72 tests green.

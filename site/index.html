@@ -6,7 +6,7 @@
 <title>penman — markdown to rich text for any platform</title>
 <meta name="description" content="You write markdown. You paste it somewhere. It looks like garbage. Penman fixes that — platform-styled rich text on your clipboard, fonts matched to the app, code highlighted, tables that survive.">
 <meta property="og:title" content="penman — markdown to rich text for any platform">
-<meta property="og:description" content="Markdown in, platform-styled rich text on the clipboard. 12 platforms, 1 command, 0 style blocks.">
+<meta property="og:description" content="Markdown in, platform-styled rich text on the clipboard. 13 platforms, 1 command, 0 style blocks.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#faf8f8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' fill='%23fdfcfc' stroke='%23312d2c' stroke-width='2'/%3E%3Cline x1='9' y1='21' x2='23' y2='11' stroke='%23ff051f' stroke-width='3'/%3E%3C/svg%3E">
@@ -388,7 +388,7 @@ const html = penman(notes, { for: "word" });
   <section class="numbers">
     <div class="wrap">
       <div class="num">
-        <span class="n">12</span>
+        <span class="n">13</span>
         <p>platforms, each with the fonts, sizes, and colors the app uses natively.</p>
       </div>
       <div class="num">
@@ -407,7 +407,7 @@ const html = penman(notes, { for: "word" });
     <div class="wrap">
       <span class="eyebrow">The platforms</span>
       <h2>It knows what Slack renders.</h2>
-      <p class="sub">Twelve targets — chat, documents, email, wikis, decks. Real values from <code>src/tokens.js</code>, not approximations: this is what each platform actually gets.</p>
+      <p class="sub">Thirteen targets — chat, documents, email, wikis, decks, notes. Real values from <code>src/tokens.js</code>, not approximations: this is what each platform actually gets.</p>
       <div class="sheet table-sheet">
         <div class="table-scroll">
           <table class="recipes">
@@ -428,6 +428,7 @@ const html = penman(notes, { for: "word" });
               <tr><td class="pname">jira</td><td class="kind">wiki</td><td>-apple-system…</td><td>14px</td><td>1.714</td><td>SFMono-Medium · 12px</td></tr>
               <tr><td class="pname">powerpoint</td><td class="kind">deck</td><td>Calibri</td><td>18pt</td><td>1.4</td><td>Consolas · 14pt</td></tr>
               <tr><td class="pname">google-slides</td><td class="kind">deck</td><td>Arial</td><td>18pt</td><td>1.4</td><td>Courier New · 14pt</td></tr>
+              <tr><td class="pname">craft</td><td class="kind">notes</td><td>ui-sans-serif</td><td>17px</td><td>1.5</td><td>ui-monospace · 14px</td></tr>
             </tbody>
           </table>
         </div>
