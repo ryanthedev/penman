@@ -1,9 +1,10 @@
 # Plan: Block-style coverage, Craft target, site design pass
 
 **Created:** 2026-06-15
-**Status:** in-progress
+**Status:** complete
 **Started:** 2026-06-15
-**Current Phase:** 1
+**Completed:** 2026-06-15
+**Current Phase:** 4 (done)
 **Complexity:** medium
 
 ---
@@ -229,3 +230,10 @@ Summary: Fixed the nested/loose-list crash (parseInline → parser.parse for blo
 - [x] Committed
 Commit: 32f6ea4
 Summary: Added Craft both ways — Mode B `craft` HTML platform (ALL_PLATFORMS→13) and Mode A `src/craft.js` `toCraftBlocks(md)` deep module + `penman_craft` MCP tool + `--craft-blocks` CLI returning Craft block JSON (schema verified against the live Craft MCP). Boundary-validated; unsupported constructs degrade visibly. 72/72 tests green.
+
+### Phase 4: Site design-for-ai pass (Gate: Standard)
+- [x] BUILD: Discovery + design + implementation (audit + cleanups) complete
+- [x] REVIEW: SKIPPED — verified by audit (48 PASS / 4 FAIL corrected / 3 deferred-and-reported) + 72/72 regression
+- [x] Committed
+Commit: ec5df5e
+Summary: Audited site/index.html against DESIGN.md (48 PASS); fixed the stale "12 platforms" token-truth violation (now 13 across numbers strip/OG meta/subtitle) and added the Craft brag-table row with its real tokens.js recipe. 3 findings deferred + reported (embedded real-output sample, not site chrome). No stylesheet changes needed; kill-list clean.
