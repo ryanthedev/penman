@@ -5,6 +5,7 @@ const { z } = require("zod");
 
 const { ALL_PLATFORMS, getSystemTheme, resolveTokens } = require("./tokens");
 const { convert } = require("./render");
+const { toCraftBlocks } = require("./craft");
 const { copyToClipboard } = require("./clipboard");
 
 const server = new McpServer({ name: "penman", version: "1.0.0" });
@@ -18,6 +19,7 @@ const PLATFORM_GROUPS = {
   email: ["outlook", "gmail"],
   wiki: ["confluence", "jira"],
   presentation: ["powerpoint", "google-slides"],
+  notes: ["craft"],
 };
 
 function ok(text) {
@@ -73,6 +75,22 @@ server.tool(
 );
 
 server.tool(
+  "penman_craft",
+  "Convert markdown to native Craft block JSON (Mode A) and return it as text — WITHOUT touching the clipboard. penman cannot call Craft's MCP itself: take the returned block array and feed it to Craft's `craft_write` (each block's `markdown` field round-trips). Use this for high-fidelity Craft inserts; use `penman --for craft` (Mode B) when you just want styled HTML on the clipboard to paste.",
+  {
+    markdown: z.string().min(1).describe("Markdown source to convert to Craft blocks."),
+  },
+  async ({ markdown }) => {
+    try {
+      const blocks = toCraftBlocks(markdown);
+      return ok(JSON.stringify(blocks, null, 2));
+    } catch (e) {
+      return err(`penman_craft failed: ${e.message}`);
+    }
+  }
+);
+
+server.tool(
   "penman_platforms",
   "List the platforms penman can target, grouped by category (chat, document, email, wiki, presentation). Call this first if you don't know which platform the user wants.",
   {},
@@ -95,7 +113,17 @@ async function main() {
   await server.connect(transport);
 }
 
-main().catch((e) => {
-  console.error("penman MCP fatal:", e);
-  process.exit(1);
-});
+// Exported so tests (and any tooling) can assert on the platform grouping
+// without booting the stdio transport. `render` is exported as the seam tests
+// use to check Mode A/B token resolution.
+module.exports = { PLATFORM_GROUPS, render };
+
+// Only connect the stdio transport when run as the entry point (penman-mcp),
+// not when imported by a test. `require.main === module` is true only for the
+// directly-executed file.
+if (require.main === module) {
+  main().catch((e) => {
+    console.error("penman MCP fatal:", e);
+    process.exit(1);
+  });
+}

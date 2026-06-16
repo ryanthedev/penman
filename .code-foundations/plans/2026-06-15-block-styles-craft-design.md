@@ -212,3 +212,10 @@
 - [x] Committed
 Commit: 4f7cc02
 Summary: Added `npm test` (node:test, no new deps) with 23 characterization assertions locking the 6 working tokens across notion/slack/outlook, plus 7 `test.todo` stubs naming each Phase-2 target; src/ untouched, renderer now under test.
+
+### Phase 2: Renderer block coverage + crash fix (Gate: Standard)
+- [x] BUILD: Discovery + design + implementation (stub → implement → validate) complete
+- [x] REVIEW: SKIPPED — tests are gate
+- [x] Committed
+Commit: 8061674
+Summary: Fixed the nested/loose-list crash (parseInline → parser.parse for block item content) and added blockquote, hr, task-list ☐/☑ glyphs, strikethrough, and image→link-with-alt handlers — each with a chat-mode fallback. 43/43 tests green (0 todo). convert() signature unchanged; HTML clipboard model preserved (no &lt;style&gt; blocks).
