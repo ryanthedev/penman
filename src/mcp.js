@@ -8,7 +8,7 @@ const { convert } = require("./render");
 const { toCraftBlocks } = require("./craft");
 const { copyToClipboard } = require("./clipboard");
 
-const server = new McpServer({ name: "penman", version: "1.0.0" });
+const server = new McpServer({ name: "penman", version: "1.1.0" });
 
 const PlatformEnum = z.enum(ALL_PLATFORMS);
 const ThemeEnum = z.enum(["light", "dark"]);
