@@ -129,21 +129,106 @@ function convert(md, tokens, platformName) {
       return `<p style="margin: 0 0 12px 0;">${text}</p>`;
     },
     list({ ordered, items }) {
+      // Render a single list item's content for document/email platforms.
+      // Item tokens may be:
+      //   - inline-only (tight items): [text, ...] — parse() dispatches inline
+      //   - block-content (loose items): [paragraph, ...] — parse() wraps in <p>
+      //   - nested list: [text, list, ...] — parse() calls list renderer recursively
+      //   - task item: [checkbox, text, ...] — filter checkbox first, prepend glyph
+      //
+      // parseInline() cannot handle block-level tokens like `list` or `paragraph`,
+      // which is the crash source. parse() handles all token types correctly and
+      // still dispatches inline tokens through the inline renderer when appropriate.
+      const renderItemDoc = (item) => {
+        if (item.task) {
+          // Task items carry a leading `checkbox` token that parse() renders as
+          // <input type="checkbox"> — stripped on paste. Remove it, prepend the
+          // Unicode glyph instead so the checked state survives without a form element.
+          const glyph = item.checked ? "☑" : "☐";
+          const contentTokens = item.tokens.filter((t) => t.type !== "checkbox");
+          return `${glyph} ${this.parser.parse(contentTokens)}`;
+        }
+        return this.parser.parse(item.tokens);
+      };
+
       if (isChat) {
-        const listItems = items
-          .map((item, i) => {
-            const text = this.parser.parseInline(item.tokens);
-            const bullet = ordered ? `${i + 1}. ` : "• ";
-            return `${bullet}${text}`;
-          })
-          .join("<br>");
-        return `${listItems}<br><br>`;
+        // Chat platforms (Slack, Teams, Discord) strip <ul>/<ol>/<li> on paste.
+        // Render as bullet/number prefixed lines joined by <br>. Nested lists
+        // are flattened: the inner list() renderer recursively returns its own
+        // bullet lines, and we strip the trailing <br><br> so the joined output
+        // doesn't accumulate extra blank lines between levels. All visible
+        // content (bullets, text) is preserved even when structural tags are lost.
+        const chatLines = items.map((item, i) => {
+          const bullet = ordered ? `${i + 1}. ` : "• ";
+          if (item.task) {
+            const glyph = item.checked ? "☑" : "☐";
+            const inlineTokens = item.tokens.filter((t) => t.type !== "checkbox" && t.type !== "list");
+            const text = stripTags(this.parser.parse(inlineTokens)).trim();
+            return `${bullet}${glyph} ${text}`;
+          }
+          // Split item.tokens into the inline/block-text portion and any nested
+          // lists. Render text inline via parse(), then append the nested list's
+          // chat output (trimming its trailing <br><br> to avoid double spacing).
+          const inlineTokens = item.tokens.filter((t) => t.type !== "list");
+          const nestedListTokens = item.tokens.filter((t) => t.type === "list");
+          const text = stripTags(this.parser.parse(inlineTokens)).trim();
+          const itemLine = `${bullet}${text}`;
+          if (nestedListTokens.length === 0) return itemLine;
+          const nested = nestedListTokens
+            .map((lt) => this.parser.parse([lt]).replace(/<br><br>$/, ""))
+            .join("<br>");
+          return `${itemLine}<br>${nested}`;
+        });
+        return `${chatLines.join("<br>")}<br><br>`;
       }
       const tag = ordered ? "ol" : "ul";
       const inner = items
-        .map((item) => `<li style="margin: 0 0 4px 0;">${this.parser.parseInline(item.tokens)}</li>`)
+        .map((item) => `<li style="margin: 0 0 4px 0;">${renderItemDoc(item)}</li>`)
         .join("");
       return `<${tag} style="margin: 0 0 12px 0; padding-left: 24px;">${inner}</${tag}>`;
+    },
+    blockquote({ tokens: blockTokens }) {
+      // <blockquote> is stripped by all paste handlers, so it only works on
+      // document/email platforms that preserve structural HTML. Chat gets a
+      // text-prefix fallback using the conventional `> ` quoting style.
+      const inner = this.parser.parse(blockTokens);
+      if (isChat) {
+        // Strip HTML, prefix each non-empty line with `> `, and preserve line
+        // breaks via white-space: pre so the quote structure survives paste.
+        const text = stripTags(inner).trim();
+        const prefixed = text
+          .split("\n")
+          .map((line) => (line.trim() ? `> ${line}` : ">"))
+          .join("\n");
+        return `<span style="white-space: pre;">${prefixed}</span><br><br>`;
+      }
+      // Border-left gives the visual indent that distinguishes a quote from body
+      // text; padding separates the text from the border line.
+      const style = `border-left: 3px solid ${tokens.codeBorder}; margin: 0 0 12px 0; padding: 8px 12px; color: ${tokens.text}; font-style: italic;`;
+      return `<blockquote style="${style}">${inner}</blockquote>`;
+    },
+    hr() {
+      // <hr> is stripped by all paste handlers. Chat gets a Unicode rule that
+      // survives as plain text. Document/email get a styled horizontal rule.
+      if (isChat) {
+        // U+2500 BOX DRAWINGS LIGHT HORIZONTAL × 20 — visible in every monospaced
+        // and proportional font; short enough not to wrap on narrow viewports.
+        return `<span>────────────────────</span><br><br>`;
+      }
+      return `<hr style="border: none; border-top: 1px solid ${tokens.codeBorder}; margin: 16px 0;">`;
+    },
+    del({ tokens: inlineTokens }) {
+      // <del> is an inline element that survives paste in both document and chat
+      // platforms, so no chat-mode branch is needed. Add the style explicitly
+      // because paste handlers strip browser default text-decoration rules.
+      return `<del style="text-decoration: line-through;">${this.parser.parseInline(inlineTokens)}</del>`;
+    },
+    image({ href, text }) {
+      // <img> is stripped on paste by every platform — the src URL is lost.
+      // Degrade to a hyperlink so the destination + alt text both survive.
+      // Empty alt falls back to the URL itself so the link is still meaningful.
+      const label = text || href;
+      return `<a href="${href}" style="color: ${tokens.link};">${label}</a>`;
     },
     table({ header, rows }) {
       if (isChat) {

@@ -319,6 +319,42 @@ const platformOverrides = {
       codeFontSize: "14pt",
     },
   },
+
+  // Notes platforms
+  // Mode B: Craft's HTML paste handler consumes inline-styled HTML like the
+  // other document platforms, so the existing convert() pipeline serves it for
+  // free. (Mode A — native Craft block JSON — lives in src/craft.js.) Fonts
+  // mirror Craft's editor stack so pasted content matches the surrounding doc.
+  craft: {
+    light: {
+      fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+      fontSize: "17px",
+      lineHeight: "1.5",
+      codeFontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      codeFontSize: "14px",
+      text: "#2c2c2c",
+      bg: "#ffffff",
+      codeBg: "#f5f5f5",
+      codeBorder: "#e4e4e4",
+      inlineCodeBg: "#f0f0f0",
+      inlineCodeText: "#c0392b",
+      link: "#0a7cff",
+    },
+    dark: {
+      fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+      fontSize: "17px",
+      lineHeight: "1.5",
+      codeFontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      codeFontSize: "14px",
+      text: "#e6e6e6",
+      bg: "#1c1c1e",
+      codeBg: "#2a2a2c",
+      codeBorder: "#3a3a3c",
+      inlineCodeBg: "#2a2a2c",
+      inlineCodeText: "#ff6b6b",
+      link: "#409cff",
+    },
+  },
 };
 
 // Platforms that require fully inlined styles (no <style> blocks)
