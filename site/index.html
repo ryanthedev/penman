@@ -6,7 +6,7 @@
 <title>penman: markdown to rich text for any platform</title>
 <meta name="description" content="Claude writes you markdown. Then it has to go to other people in Slack, a doc, or email, and the paste mangles it. penman fixes that paste: rich text on your clipboard, styled the way the app actually renders. ⌘V. Done.">
 <meta property="og:title" content="penman: markdown to rich text for any platform">
-<meta property="og:description" content="Markdown in, platform-styled rich text on the clipboard. 13 platforms, 1 command, 0 style blocks.">
+<meta property="og:description" content="Markdown in, platform-styled rich text on the clipboard — or a clean plain-text command for your terminal. 13 platforms, 1 command, 0 style blocks.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#faf8f8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' fill='%23fdfcfc' stroke='%23312d2c' stroke-width='2'/%3E%3Cline x1='9' y1='21' x2='23' y2='11' stroke='%23ff051f' stroke-width='3'/%3E%3C/svg%3E">
@@ -272,7 +272,7 @@ table.recipes { width: 100%; border-collapse: collapse; min-width: 720px; }
 
 /* --- hard part -------------------------------------------------------- */
 .versus { display: grid; gap: var(--s5); grid-template-columns: 1fr; margin-top: var(--s5); }
-@media (min-width: 880px) { .versus { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 880px) { .versus { grid-template-columns: 1fr 1fr 1fr; } }
 .versus .paper { padding: var(--s4); }
 .versus h3 { font: 600 14px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: var(--s3); }
 .versus p.how { font-size: 15px; color: var(--text-secondary); margin-bottom: var(--s3); }
@@ -285,6 +285,12 @@ table.recipes { width: 100%; border-collapse: collapse; min-width: 720px; }
   font-family: Calibri, Carlito, sans-serif; font-size: 11pt; color: #333; background: #fff; }
 .word-table th { padding: 6px 12px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5; text-align: left; }
 .word-table td { padding: 6px 12px; border: 1px solid #e0e0e0; }
+/* terminal target — plain command, ink on paper (NOT terminal cosplay — see DESIGN "Never") */
+.term-pre {
+  background: var(--neutral-3); padding: 8px 12px;
+  font: 400 13px/1.7 var(--mono); color: var(--text);
+  white-space: pre; overflow-x: auto;
+}
 
 /* --- claude code section ------------------------------------------------ */
 .cmdsheet { padding: var(--s4); margin-top: var(--s5); position: relative; }
@@ -407,7 +413,7 @@ const html = penman(notes, { for: "word" });
     <div class="wrap">
       <span class="eyebrow">The platforms</span>
       <h2>It knows what Slack renders.</h2>
-      <p class="sub">Thirteen targets: chat, documents, email, wikis, decks, notes. Real values pulled from <code>src/tokens.js</code>, not approximations. This is what each app actually renders, so it never looks off to the person reading it.</p>
+      <p class="sub">Thirteen styled targets: chat, documents, email, wikis, decks, notes — plus a plain-text terminal mode for commands. Real values pulled from <code>src/tokens.js</code>, not approximations. This is what each app actually renders, so it never looks off to the person reading it.</p>
       <div class="sheet table-sheet">
         <div class="table-scroll">
           <table class="recipes">
@@ -442,7 +448,7 @@ const html = penman(notes, { for: "word" });
     <div class="wrap">
       <span class="eyebrow">The hard part</span>
       <h2>Slack eats your &lt;h1&gt;.</h2>
-      <p class="sub">Teams collapses your <code>&lt;p&gt;</code>. Discord dumps your table's cells into one line. Chat apps strip structure on paste, so penman doesn't send them structure.</p>
+      <p class="sub">Teams collapses your <code>&lt;p&gt;</code>. Discord dumps your table's cells into one line. Chat apps strip structure on paste, so penman doesn't send them structure. Your terminal wants the opposite extreme — no formatting at all — so penman strips it back to the bare command.</p>
       <div class="versus">
         <div>
           <div class="sheet paper">
@@ -467,6 +473,16 @@ churn   | &lt; 2%  </div>
             </table>
           </div>
           <p class="sheet-cap">the same table, set for word.</p>
+        </div>
+        <div>
+          <div class="sheet paper">
+            <h3>Terminal targets</h3>
+            <p class="how">No formatting at all — just the command. penman lifts it out of the code fence, drops the prose, and copies plain text. The trailing newline is trimmed, so the last line waits for your Enter instead of running on paste.</p>
+            <!-- real output of `penman --for terminal` -->
+            <div class="term-pre">bun install
+bun run build</div>
+          </div>
+          <p class="sheet-cap">the command, set for your shell.</p>
         </div>
       </div>
     </div>
@@ -539,7 +555,7 @@ churn   | &lt; 2%  </div>
           <p class="t-claude"><span class="ok">On your clipboard,</span> styled for Teams: Segoe UI, 14px, the works. &#8984;V away.</p>
         </div>
       </div>
-      <p class="alt-asks">also works: <em>"penman the release notes for slack"</em> · <em>"make this paste-ready for word, dark mode"</em> · <em>"what platforms can you style?"</em></p>
+      <p class="alt-asks">also works: <em>"penman the release notes for slack"</em> · <em>"make this paste-ready for word, dark mode"</em> · <em>"pen this command for the terminal"</em> · <em>"what platforms can you style?"</em></p>
 
       <ul class="tools">
         <li><span class="tname">penman</span><span class="tdesc">convert and copy to the clipboard (the everyday one)</span></li>

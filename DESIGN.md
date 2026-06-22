@@ -177,9 +177,9 @@ Color roles:
 ## Page structure (information design — first-class, foundations §3)
 Problem-first narrative (rev 2026-06-06): the gap between Claude's markdown and where it has to land.
 1. **Hero — the problem (outcome-first / spine A)** — "Claude writes it clean. You paste it into Teams. Your team sees a mess." → "Penman bridges the gap." The frame is the handoff to a human reader, not the converter mechanics. Two sheets (signature move), CTAs
-2. **Numbers strip** — oversized Fraunces numerals, reader-framed (not implementation brag): 13 places your reader is · 1 thing you do · 0 cleanup after paste
-3. **The platforms** — the brag table: every platform's real recipe (slack · Lato · 15px …), 1px ruled, mono values
-4. **The hard part** — chat-vs-document rendering insight (Slack strips your HTML; penman renders differently per target)
+2. **Numbers strip** — oversized Fraunces numerals, reader-framed (not implementation brag): 13 places your reader is · 1 thing you do · 0 cleanup after paste. (The terminal target is deliberately excluded from "13 places your reader is" — the terminal is where the author pastes, not a reader surface — so the count stays 13.)
+3. **The platforms** — the brag table: every platform's real recipe (slack · Lato · 15px …), 1px ruled, mono values. 13 *styled* platforms are tabled; the terminal target has no typographic recipe (it is plain text), so it is named in the lede, not given a row.
+4. **The hard part** — per-target rendering, three modes (terminal added 2026-06-22): chat strips structure (bold + `<br>` + `<pre>` tables), document/email get full inline-styled HTML, and the **terminal** target strips everything to a runnable plain-text command (smart code-block extraction, trailing newline trimmed so the last line waits for Enter). Slack strips your HTML; penman renders differently per target. The terminal panel stays inside the paper metaphor — ink-on-paper mono, never retro-terminal cosplay (see Never).
 5. **How it works** — Tokens → Render → Clipboard as three small sheets
 6. **Customize** — `~/.penman.json5` token overrides, global and per-platform
 7. **For Claude Code** — natural-language usage first ("pen that for teams"), the three MCP tools, marketplace install; slash command and CLI as the footnote
