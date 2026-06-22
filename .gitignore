@@ -1,3 +1,6 @@
 node_modules/
 .claude/
 *.applescript
+
+# skill-eval scratch (trigger-optimization workspaces)
+skills/*-workspace/

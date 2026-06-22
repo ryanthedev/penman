@@ -1,6 +1,6 @@
 {
   "name": "penman",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Convert markdown to rich text styled for any platform — Slack, Teams, Discord, Notion, Word, Outlook, Gmail, Confluence, Jira, PowerPoint — and drop it on the clipboard ready to paste.",
   "keywords": [
     "markdown",
@@ -22,7 +22,7 @@
   "mcpServers": {
     "penman": {
       "command": "bun",
-      "args": ["run", "${CLAUDE_PLUGIN_ROOT}/src/mcp.js"]
+      "args": ["run", "${CLAUDE_PLUGIN_ROOT}/dist/mcp.js"]
     }
   }
 }

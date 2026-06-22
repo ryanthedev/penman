@@ -13,9 +13,7 @@ From the [RTD marketplace](https://github.com/ryanthedev/rtd-claude-inn):
 /plugin install penman@rtd
 ```
 
-Then run `/penman:install` to pull dependencies and seed `~/.penman.json5`. You'll need [Bun](https://bun.sh).
-
-Re-run `/penman:install` after every update. The cached plugin path changes with each version, so the old one goes stale.
+penman runs on [Bun](https://bun.sh). If you already have it, you're done — the server ships bundled and seeds its config on first run. If you don't, run `/penman:install` and it'll help you install bun.
 
 ## Usage
 
@@ -25,13 +23,15 @@ Tell Claude where it's going:
 /penman:pen --slack
 /penman:pen --teams ./notes.md
 /penman:pen --word --dark
+/penman:pen --terminal ./setup.md
 ```
 
-Pass a platform flag. Add a file or some inline text if you want, or leave it off and penman asks. There's a plain CLI too:
+Pass a platform flag. Add a file or some inline text if you want, or leave it off and penman asks. Or just say it in plain words — "can you pen this for Slack" works too. There's a plain CLI:
 
 ```bash
 penman --for slack < notes.md
 penman --for word --theme dark notes.md
+penman --for terminal ./setup.md
 ```
 
 ### MCP tools
@@ -53,8 +53,11 @@ Four tools Claude can call on its own:
 | Wiki | confluence, jira |
 | Presentation | powerpoint, google-slides |
 | Notes | craft |
+| Terminal | terminal |
 
-Thirteen of them. Each carries its own font stack, sizes, and colors, matched to what the app uses natively. Slack is Lato at 15px. Word is Calibri at 11pt. Notion is its system-ui stack at 16px. The values aren't approximations; they're what each app actually renders.
+Thirteen styled platforms. Each carries its own font stack, sizes, and colors, matched to what the app uses natively. Slack is Lato at 15px. Word is Calibri at 11pt. Notion is its system-ui stack at 16px. The values aren't approximations; they're what each app actually renders.
+
+`terminal` is the odd one out: not styled at all. It copies a multi-line command as **plain text** (a terminal can't use rich text), pulling the commands out of any fenced code blocks and stripping the trailing newline so the last line waits for you to press Enter instead of running on paste.
 
 ### Craft is special
 

@@ -1,19 +1,20 @@
 #!/usr/bin/env bun
 const fs = require("fs");
 
-const { ALL_PLATFORMS, getSystemTheme, resolveTokens } = require("../src/tokens");
+const { ALL_PLATFORMS, ALL_TARGETS, TERMINAL_TARGET, getSystemTheme, resolveTokens } = require("../src/tokens");
 const { convert } = require("../src/render");
 const { toCraftBlocks } = require("../src/craft");
-const { copyToClipboard } = require("../src/clipboard");
+const { toTerminalText } = require("../src/terminal");
+const { copyToClipboard, copyPlainToClipboard } = require("../src/clipboard");
 
 function usage() {
   console.error("Usage: penman --for <platform> [--theme dark|light] [file]");
   console.error("       cat file.md | penman --for teams");
   console.error("");
-  console.error(`Platforms: ${ALL_PLATFORMS.join(", ")}`);
+  console.error(`Targets: ${ALL_TARGETS.join(", ")}`);
   console.error("");
   console.error("Options:");
-  console.error("  --for, -f       Target platform");
+  console.error("  --for, -f       Target platform (or \"terminal\" for a plain-text command)");
   console.error("  --theme, -t     Force light or dark (default: system)");
   console.error("  --tokens        Print resolved tokens as JSON and exit");
   console.error("  --craft-blocks  Print native Craft block JSON (Mode A) to stdout, no clipboard");
@@ -76,8 +77,20 @@ if (craftBlocks) {
   return;
 }
 
-if (!platformName || !ALL_PLATFORMS.includes(platformName)) {
-  if (platformName) console.error(`Unknown platform: ${platformName}. Use ${ALL_PLATFORMS.join(", ")}.`);
+// Terminal target: plain command text, no tokens/theme/HTML. Like --craft-blocks,
+// it short-circuits before platform/token resolution.
+if (platformName === TERMINAL_TARGET) {
+  readInput((md) => {
+    const text = toTerminalText(md);
+    copyPlainToClipboard(text);
+    const lineCount = text.length === 0 ? 0 : text.split("\n").length;
+    console.log(`Copied ${lineCount} line${lineCount === 1 ? "" : "s"} as plain text (terminal). The last line waits for Enter.`);
+  });
+  return;
+}
+
+if (!platformName || !ALL_TARGETS.includes(platformName)) {
+  if (platformName) console.error(`Unknown target: ${platformName}. Use ${ALL_TARGETS.join(", ")}.`);
   usage();
 }
 

@@ -42,4 +42,11 @@ function copyToClipboard(html) {
   }
 }
 
-module.exports = { copyToClipboard };
+// Plain-text-only clipboard, for the terminal target. We deliberately set NO
+// «class HTML» flavor here — a terminal pastes the plain text, and a stray rich
+// flavor only invites mangling. pbcopy handles UTF-8 and needs no escaping.
+function copyPlainToClipboard(text) {
+  execFileSync("pbcopy", { input: text, encoding: "utf-8", timeout: 10000 });
+}
+
+module.exports = { copyToClipboard, copyPlainToClipboard };

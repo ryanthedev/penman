@@ -362,6 +362,13 @@ const EMAIL_PLATFORMS = new Set(["outlook", "gmail"]);
 
 const ALL_PLATFORMS = Object.keys(platformOverrides);
 
+// "terminal" is a target, not a styled platform: it has no tokens and produces
+// plain command text rather than rich HTML (see src/terminal.js). It rides the
+// same `--for`/`platform` arg as the platforms, so callers validate against
+// ALL_TARGETS while token/HTML resolution stays keyed on ALL_PLATFORMS.
+const TERMINAL_TARGET = "terminal";
+const ALL_TARGETS = [...ALL_PLATFORMS, TERMINAL_TARGET];
+
 // --- System theme detection ---
 
 function getSystemTheme() {
@@ -410,6 +417,8 @@ module.exports = {
   platformOverrides,
   EMAIL_PLATFORMS,
   ALL_PLATFORMS,
+  TERMINAL_TARGET,
+  ALL_TARGETS,
   getSystemTheme,
   findConfig,
   loadConfig,
